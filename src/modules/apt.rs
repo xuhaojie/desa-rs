@@ -1,22 +1,20 @@
 use crate::Module;
 use clap::{Arg, ArgMatches, Command};
+pub struct AptModule;
 
-pub struct DockerModule;
-
-impl DockerModule{
+impl AptModule{
 	pub fn new() -> Self {
-		DockerModule{}
+		AptModule{}
 	}
 }
-	
 
-impl Module for DockerModule{
+impl Module for AptModule{
 	fn cmd(&self) -> &'static str{
-		"docker"
+		"apt"
 	}
 	fn register<'a>(&self, cmd : Command<'a>) -> Command<'a>{
 		cmd.subcommand(Command::new(self.cmd())
-		.about("install or setup docker")
+		.about("setup apt")
 		.arg(Arg::new("action")
 			.help("Sets the action to perform")
 			.required(true))
