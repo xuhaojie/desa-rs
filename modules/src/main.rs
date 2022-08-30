@@ -1,6 +1,6 @@
 pub mod modules;
 use std::io::{stderr,stdout,Write};
-
+use utility::download::*;
 use crate::modules::*;
 
 extern crate clap;
@@ -18,30 +18,14 @@ pub struct SubModule<'a> {
 
 
 fn main() {
-	use std::process;
 
-	let output = if cfg!(target_os = "windows") {
-		process::Command::new("cmd")
-				.args(["/C", "echo hello12"])
-				.output()
-				.expect("failed to execute process")
-	} else {
-		process::Command::new("sh")
-				.arg("-c")
-				.arg("echo hello11")
-				.output()
-				.expect("failed to execute process")
-	};
-	
-
-	println!("status: {}", &output.status);
-	stdout().write_all(&output.stdout).unwrap();
-	stderr().write_all(&output.stderr).unwrap();
+	download("http://httpbin.org/ip");
 
 	let modules: Vec<Box<dyn Module>> = vec![
 		Box::new(apt::AptModule::new()),
 		Box::new(docker::DockerModule::new()),
 		Box::new(npm::NpmModule::new()),
+		Box::new(vscode::VscodeModule::new()),
 	];
 	let mut cmd = Command::new("desa")
 						  .version("1.0")

@@ -9,7 +9,6 @@ impl DockerModule{
 	}
 }
 	
-
 impl Module for DockerModule{
 	fn cmd(&self) -> &'static str{
 		"docker"
