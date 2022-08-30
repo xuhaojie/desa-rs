@@ -2,11 +2,11 @@ use crate::{Module , BasicAction, BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
 use utility::{download::*, execute::*};
 
-struct VscodeModule{
+struct VScodeModule{
 	action_manager: BasicActionManager<Self>,
 }
 
-impl Module for VscodeModule{
+impl Module for VScodeModule{
 
 	fn name(&self) -> &'static str{
 		"vscode"
@@ -14,7 +14,7 @@ impl Module for VscodeModule{
 
 	fn command<'a>(&self) -> Command<'a> {
 		Command::new(self.name())
-		.about("setup vscode")
+		.about("download vscode")
 		.arg(Arg::new("action")
 			.help("Sets the action to perform")
 			.required(true))
@@ -37,7 +37,7 @@ impl Module for VscodeModule{
 }
 
 pub fn new() -> Box<dyn Module> {
-	let module = VscodeModule{
+	let module = VScodeModule{
 		action_manager: BasicActionManager{
 			actions:vec![
 				BasicAction{name:"download",  execute: action_download},
@@ -48,7 +48,7 @@ pub fn new() -> Box<dyn Module> {
 	Box::new(module)
 }
 
-fn action_download(module: &VscodeModule, param:&ArgMatches){
+fn action_download(module: &VScodeModule, param:&ArgMatches){
 	println!("test action in {}", module.name());
 	match download("http://httpbin.org/get"){
 		Ok(body) =>{
@@ -60,7 +60,7 @@ fn action_download(module: &VscodeModule, param:&ArgMatches){
 	}
 }
 
-fn action_setup(module: &VscodeModule, param:&ArgMatches){
+fn action_setup(module: &VScodeModule, param:&ArgMatches){
 	println!("setup action in {}", module.name());
 	if let Some(action) = param.value_of("proxy"){
 		let config = param.value_of("proxy").unwrap_or("default.conf");
