@@ -1,5 +1,6 @@
 use crate::{Module , BasicAction, BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
+use utility::download::download_file;
 struct VMWareModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -70,5 +71,6 @@ fn action_download(module: &VMWareModule, param:&ArgMatches){
 	}
 	let file_name = fields[fields.len()-1];
 	println!("get filename: {}", file_name);
+	download_file(target_url.as_str(),file_name);
 	return
 }
