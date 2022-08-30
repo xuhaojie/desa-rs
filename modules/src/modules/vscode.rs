@@ -1,7 +1,8 @@
-
 use crate::Module;
 use clap::{Arg, ArgMatches, Command};
 use utility::download::*;
+
+
 pub struct VscodeModule;
 
 impl VscodeModule{
@@ -35,7 +36,7 @@ impl Module for VscodeModule{
 			match action{
 				"download" => {
 					println!("download");
-					download("");
+					download("").unwrap();
 				},
 				"setup" => {
 					println!("setup");

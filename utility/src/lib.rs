@@ -1,8 +1,4 @@
 pub mod download;
-
-use surf::http::Body;
-use surf::http::convert::{Serialize, Deserialize};
-
 #[cfg(test)]
 mod tests {
     #[test]

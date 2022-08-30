@@ -1,6 +1,6 @@
-use surf::http::Body;
-use surf::http::convert::{Serialize, Deserialize};
-
-pub fn download(rul: &str){
-
+pub fn download(rul: &str) -> Result<(), Box<dyn std::error::Error>> { 
+	let body = reqwest::blocking::get("https://www.rust-lang.org")?
+    .text()?;
+	println!("body = {:?}", body);
+	Ok(())
 }

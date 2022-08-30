@@ -2,8 +2,8 @@ pub mod modules;
 use std::io::{stderr,stdout,Write};
 use utility::download::*;
 use crate::modules::*;
+//extern crate clap;
 
-extern crate clap;
 use clap::{Arg, App, SubCommand, ArgMatches, Command};
 pub trait Module {
 	fn cmd(&self) -> &'static str;
@@ -16,8 +16,7 @@ pub struct SubModule<'a> {
 
 }
 
-
-fn main() {
+fn main() -> std::io::Result<()> {
 
 	download("http://httpbin.org/ip");
 
@@ -90,5 +89,5 @@ fn main() {
 		}
 	}
 
-	// 其他程序逻辑...
+	Ok(())
 }
