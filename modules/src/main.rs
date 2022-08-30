@@ -5,6 +5,7 @@ use crate::modules::*;
 //extern crate clap;
 
 use clap::{Arg, App, SubCommand, ArgMatches, Command};
+/*
 pub trait Action {
 	fn name(&self) -> &'static str;
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()>;
@@ -13,6 +14,9 @@ pub trait ActionManager {
 	fn add(name: String, action: dyn Action);
 	fn execute_action(&self, name: &str,param: &ArgMatches);
 }
+*/
+
+
 
 pub trait Module {
 	fn name(&self) -> &'static str;
@@ -22,7 +26,7 @@ pub trait Module {
 }
 
 pub struct BasicAction<T> {
-	name: String,
+	name: &'static str,
 	execute: fn(module: &T, param: &ArgMatches),
 }
 pub struct BasicActionManager<T> {
@@ -41,14 +45,14 @@ impl <T>BasicActionManager<T> {
 		}
 	}
 }
-
+/*
 pub struct SubModule<'a> {
 	name : &'a str,
 	cmd: Command<'a>,
 	action_manager : BasicActionManager<Self>,
 	execute: fn(module: &SubModule, param: &ArgMatches),
 }
-
+*/
 fn main() -> std::io::Result<()> {
 
 	let mut cmd = Command::new("desa")
@@ -79,6 +83,7 @@ fn main() -> std::io::Result<()> {
 
 	let modules: Vec<Box<dyn Module>> = vec![
 		apt::new(),
+		cargo::new(),
 		Box::new(docker::DockerModule::new()),
 		Box::new(git::GitModule::new()),
 		Box::new(npm::NpmModule::new()),

@@ -1,19 +1,17 @@
-use crate::Module;
+use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
-pub struct CargoModule;
-
-impl CargoModule{
-	pub fn new() -> Self {
-		CargoModule{}
-	}
+struct CargoModule{
+	action_manager: BasicActionManager<Self>,
 }
 
-impl Module for AptModule{
-	fn cmd(&self) -> &'static str{
+impl Module for CargoModule{
+
+	fn name(&self) -> &'static str{
 		"cargo"
 	}
-	fn register<'a>(&self, cmd : Command<'a>) -> Command<'a>{
-		cmd.subcommand(Command::new(self.cmd())
+
+	fn command<'a>(&self) -> Command<'a> {
+		Command::new(self.name())
 		.about("setup cargo")
 		.arg(Arg::new("action")
 			.help("Sets the action to perform")
@@ -25,29 +23,37 @@ impl Module for AptModule{
 			.takes_value(true))			
 		.arg(Arg::new("debug")
 			.short('d')
-			.help("print debug information verbosely")))
+			.help("print debug information verbosely"))
 	}
-	fn execute(&self, param: &ArgMatches){
-		println!("{} execute!", self.cmd());
+
+	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
 		if let Some(action) = param.value_of("action"){
-			match action{
-				"install" => {
-					println!("install");
-
-
-				},
-				"setup" => {
-					println!("setup");
-					if let Some(action) = param.value_of("proxy"){
-						let config = param.value_of("proxy").unwrap_or("default.conf");
-						println!("Value for proxy: {}", config);
-					
-					}
-				},
-				_ => println!("unkonwn action: {}", action),
-			}
-
+			self.action_manager.execute_action(action, self, param);
 		};
+		Ok(())
+	}
+}
 
+pub fn new() -> Box<dyn Module> {
+	Box::new(CargoModule{
+		action_manager: BasicActionManager{
+			actions:vec![
+				BasicAction{name:"test",  execute: action_test},
+				BasicAction{name:"setup", execute: action_setup},
+			]
+		}
+	})
+}
+
+fn action_test(module: &CargoModule, param:&ArgMatches){
+	println!("test action in {}", module.name());
+}
+
+fn action_setup(module: &CargoModule, param:&ArgMatches){
+	println!("setup action in {}", module.name());
+	if let Some(action) = param.value_of("proxy"){
+		let config = param.value_of("proxy").unwrap_or("default.conf");
+		println!("Value for proxy: {}", config);
+	
 	}
 }

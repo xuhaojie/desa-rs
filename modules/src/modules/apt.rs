@@ -4,26 +4,6 @@ struct AptModule{
 	action_manager: BasicActionManager<Self>,
 }
 
-fn action_test(module: &AptModule, param:&ArgMatches){
-	println!("action_test");
-}
-
-pub fn new() -> Box<dyn Module> {
-	let module = AptModule{
-		action_manager: BasicActionManager{
-			actions:vec![
-				BasicAction{name:"test".to_string(), execute:|module: &AptModule, param: &ArgMatches| {
-					println!("test action in {}", module.name());
-				}},
-				BasicAction{name:"setup".to_string(), execute:|module: &AptModule, param: &ArgMatches| {
-					println!("setup action in {}", module.name());
-				}},
-			]
-		}
-	};
-	Box::new(module)
-}
-
 impl Module for AptModule{
 
 	fn name(&self) -> &'static str{
@@ -52,4 +32,24 @@ impl Module for AptModule{
 		};
 		Ok(())
 	}
+}
+
+pub fn new() -> Box<dyn Module> {
+	let module = AptModule{
+		action_manager: BasicActionManager{
+			actions:vec![
+				BasicAction{name:"test",  execute: action_test},
+				BasicAction{name:"setup", execute: action_setup},
+			]
+		}
+	};
+	Box::new(module)
+}
+
+fn action_test(module: &AptModule, param:&ArgMatches){
+	println!("test action in {}", module.name());
+}
+
+fn action_setup(module: &AptModule, param:&ArgMatches){
+	println!("setup action in {}", module.name());
 }
