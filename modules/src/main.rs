@@ -5,27 +5,52 @@ use crate::modules::*;
 //extern crate clap;
 
 use clap::{Arg, App, SubCommand, ArgMatches, Command};
-pub trait Module {
-	fn cmd(&self) -> &'static str;
-	fn register<'a>(&self, app : App<'a>) -> App<'a>;
+pub trait Action {
+	fn name(&self) -> &'static str;
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()>;
 }
-pub struct SubModule<'a> {
-	cmd: &'a str,
-	title: &'static str,
+pub trait ActionManager {
+	fn add(name: String, action: dyn Action);
+	fn execute_action(&self, name: &str,param: &ArgMatches);
+}
 
+pub trait Module {
+	fn name(&self) -> &'static str;
+	fn command<'a>(&self) -> Command<'a>;
+	//fn register<'a>(&self, app : App<'a>) -> App<'a>;
+	fn execute(&self, param: &ArgMatches) -> std::io::Result<()>;
+}
+
+pub struct BasicAction<T> {
+	name: String,
+	execute: fn(module: &T, param: &ArgMatches),
+}
+pub struct BasicActionManager<T> {
+	actions : Vec<BasicAction<T>>,
+}
+
+impl <T>BasicActionManager<T> {
+	fn execute_action(&self, name: &str,module : &T, param: &ArgMatches) {
+		for action in &self.actions {
+			if action.name == name {
+				//cmd = module.register(cmd);
+				println!("{}",action.name);
+				(action.execute)(module,param);
+				break;
+			}
+		}
+	}
+}
+
+pub struct SubModule<'a> {
+	name : &'a str,
+	cmd: Command<'a>,
+	action_manager : BasicActionManager<Self>,
+	execute: fn(module: &SubModule, param: &ArgMatches),
 }
 
 fn main() -> std::io::Result<()> {
 
-	download("http://httpbin.org/ip");
-
-	let modules: Vec<Box<dyn Module>> = vec![
-		Box::new(apt::AptModule::new()),
-		Box::new(docker::DockerModule::new()),
-		Box::new(npm::NpmModule::new()),
-		Box::new(vscode::VscodeModule::new()),
-	];
 	let mut cmd = Command::new("desa")
 						  .version("1.0")
 						  .author("Kevin K. <kbknapp@gmail.com>")
@@ -51,10 +76,20 @@ fn main() -> std::io::Result<()> {
 										  .short('d')
 										  .help("print debug information verbosely")));
 
-	for module in modules.iter() {
-		cmd = module.register(cmd);
+
+	let modules: Vec<Box<dyn Module>> = vec![
+		apt::new(),
+		Box::new(docker::DockerModule::new()),
+		Box::new(git::GitModule::new()),
+		Box::new(npm::NpmModule::new()),
+		Box::new(vscode::VscodeModule::new()),
+	];
+
+	for module in &modules {
+		cmd = cmd.subcommand(module.command());
 	}
 
+	
 	let matches = cmd.get_matches();
 
 	// 如果用户提供、则获取该值作为config，或者默认使用 “default.conf”
@@ -82,8 +117,9 @@ fn main() -> std::io::Result<()> {
 	// 你可以通过以下方式处理有关子命令的信息：按名称请求它们的匹配（如下所示）
 	// 仅请求正在使用的名称或两者同时请求
 
-	for module in modules.iter() {
-		if let Some(matches) = matches.subcommand_matches(module.cmd()) {
+	for module in &modules {
+		if let Some(matches) = matches.subcommand_matches(module.name()) {
+			println!("{} execute!", module.name());
 			module.execute(matches);
 			break;
 		}

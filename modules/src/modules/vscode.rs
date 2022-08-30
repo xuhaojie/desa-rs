@@ -11,12 +11,28 @@ impl VscodeModule{
 	}
 }
 
+
+/*
+#[cfg(target_os = "macos")]
+static DEFAULT_PATH: &str = "path2";
+#[cfg(target_os = "linux")]
+static DEFAULT_PATH: &str = "path0";
+#[cfg(target_os = "windows")]
+static DEFAULT_PATH: &str = "path1";
+
+if cfg!(windows) {
+    println!("this is windows");
+} else if cfg!(unix) {
+    println!("this is unix alike");
+}
+*/
+
 impl Module for VscodeModule{
-	fn cmd(&self) -> &'static str{
+	fn name(&self) -> &'static str{
 		"vscode"
 	}
-	fn register<'a>(&self, cmd : Command<'a>) -> Command<'a>{
-		cmd.subcommand(Command::new(self.cmd())
+	fn command<'a>(&self) -> Command<'a> {
+		Command::new(self.name())
 		.about("setup vscode")
 		.arg(Arg::new("action")
 			.help("Sets the action to perform")
@@ -28,10 +44,10 @@ impl Module for VscodeModule{
 			.takes_value(true))			
 		.arg(Arg::new("debug")
 			.short('d')
-			.help("print debug information verbosely")))
+			.help("print debug information verbosely"))
 	}
+
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()>{
-		println!("{} execute!", self.cmd());
 		if let Some(action) = param.value_of("action"){
 			match action{
 				"download" => {

@@ -10,22 +10,20 @@ impl NpmModule{
 }
 
 impl Module for NpmModule{
-	fn cmd(&self) -> &'static str{
+	fn name(&self) -> &'static str{
 		"npm"
 	}
-
-	fn register<'a>(&self, cmd : Command<'a>) -> Command<'a>{
-		cmd.subcommand(Command::new(self.cmd())
+	fn command<'a>(&self) -> Command<'a> {
+		Command::new(self.name())
 		.about("install or setup docker")
 		.arg(Arg::new("action")
 			.help("Sets the input file to use"))
 		.arg(Arg::with_name("debug")
 			.short('d')
-			.help("print debug information verbosely")))
+			.help("print debug information verbosely"))
 	}
 
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-		println!("{} execute!", self.cmd());
 		if let Some(input) = param.value_of("action"){
 			println!("action: {}", input);
 		}

@@ -1,19 +1,37 @@
-use crate::Module;
+use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
-pub struct AptModule;
+struct AptModule{
+	action_manager: BasicActionManager<Self>,
+}
 
-impl AptModule{
-	pub fn new() -> Self {
-		AptModule{}
-	}
+fn action_test(module: &AptModule, param:&ArgMatches){
+	println!("action_test");
+}
+
+pub fn new() -> Box<dyn Module> {
+	let module = AptModule{
+		action_manager: BasicActionManager{
+			actions:vec![
+				BasicAction{name:"test".to_string(), execute:|module: &AptModule, param: &ArgMatches| {
+					println!("test action in {}", module.name());
+				}},
+				BasicAction{name:"setup".to_string(), execute:|module: &AptModule, param: &ArgMatches| {
+					println!("setup action in {}", module.name());
+				}},
+			]
+		}
+	};
+	Box::new(module)
 }
 
 impl Module for AptModule{
-	fn cmd(&self) -> &'static str{
+
+	fn name(&self) -> &'static str{
 		"apt"
 	}
-	fn register<'a>(&self, cmd : Command<'a>) -> Command<'a>{
-		cmd.subcommand(Command::new(self.cmd())
+
+	fn command<'a>(&self) -> Command<'a> {
+		Command::new(self.name())
 		.about("setup apt")
 		.arg(Arg::new("action")
 			.help("Sets the action to perform")
@@ -25,28 +43,12 @@ impl Module for AptModule{
 			.takes_value(true))			
 		.arg(Arg::new("debug")
 			.short('d')
-			.help("print debug information verbosely")))
+			.help("print debug information verbosely"))
 	}
+
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-		println!("{} execute!", self.cmd());
 		if let Some(action) = param.value_of("action"){
-			match action{
-				"install" => {
-					println!("install");
-
-
-				},
-				"setup" => {
-					println!("setup");
-					if let Some(action) = param.value_of("proxy"){
-						let config = param.value_of("proxy").unwrap_or("default.conf");
-						println!("Value for proxy: {}", config);
-					
-					}
-				},
-				_ => println!("unkonwn action: {}", action),
-			}
-
+			self.action_manager.execute_action(action, self, param);
 		};
 		Ok(())
 	}

@@ -18,3 +18,9 @@ pub fn execute_command(cmd: &str){
 	let output_str = String::from_utf8_lossy(&output.stdout);
 	println!("{}", output_str);
 }
+
+pub fn execute_commands(cmds: Vec<String>){
+	for cmd in &cmds {
+		execute_command(cmd);
+	}
+}
