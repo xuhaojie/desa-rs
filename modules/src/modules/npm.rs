@@ -7,7 +7,7 @@ struct NpmModule{
 impl Module for NpmModule{
 
 	fn name(&self) -> &'static str{
-		"apt"
+		"npm"
 	}
 
 	fn command<'a>(&self) -> Command<'a> {

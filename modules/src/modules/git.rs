@@ -1,5 +1,6 @@
 use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
+use utility::process;
 struct GitModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -7,7 +8,7 @@ struct GitModule{
 impl Module for GitModule{
 
 	fn name(&self) -> &'static str{
-		"docker"
+		"git"
 	}
 
 	fn command<'a>(&self) -> Command<'a> {
@@ -16,14 +17,16 @@ impl Module for GitModule{
 		.arg(Arg::new("action")
 			.help("Sets the action to perform")
 			.required(true))
-		.arg(Arg::new("proxy")
-			.short('p')
-			.long("proxy")
-			.help("Sets a custom proxy")
+		.arg(Arg::new("user")
+			.short('u')
+			.long("user")
+			.help("Sets user name")
 			.takes_value(true))			
-		.arg(Arg::new("debug")
-			.short('d')
-			.help("print debug information verbosely"))
+		.arg(Arg::new("email")
+			.short('e')
+			.long("email")
+			.help("Sets email address")
+			.takes_value(true))	
 	}
 
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
@@ -51,9 +54,18 @@ fn action_test(module: &GitModule, param:&ArgMatches){
 
 fn action_setup(module: &GitModule, param:&ArgMatches){
 	println!("setup action in {}", module.name());
-	if let Some(action) = param.value_of("proxy"){
-		let config = param.value_of("proxy").unwrap_or("default.conf");
-		println!("Value for proxy: {}", config);
-	
+
+	if let Some(user) = param.value_of("user"){
+		println!("user {}", user);
+		let cmd = "git config --global user.name xuhaojie";
+		process::execute_command(cmd);
 	}
+
+	if let Some(email) = param.value_of("email"){
+		println!("email {}", email);
+		let cmd = "git config --global user.email xuhaojie@hotmail.com";
+		process::execute_command(cmd);
+
+	}	
+	
 }
