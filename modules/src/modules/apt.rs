@@ -1,4 +1,4 @@
-use crate::{Module , BasicAction,BasicActionManager};
+use crate::{Module , BasicAction, BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
 struct AptModule{
 	action_manager: BasicActionManager<Self>,

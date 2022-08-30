@@ -1,32 +1,55 @@
-use crate::{Module};
-use clap::{Arg, Command, ArgMatches};
-
-pub struct NpmModule;
-
-impl NpmModule{
-	pub fn new() -> Self {
-		NpmModule{}
-	}
+use crate::{Module , BasicAction,BasicActionManager};
+use clap::{Arg, ArgMatches, Command};
+struct NpmModule{
+	action_manager: BasicActionManager<Self>,
 }
 
 impl Module for NpmModule{
+
 	fn name(&self) -> &'static str{
-		"npm"
+		"apt"
 	}
+
 	fn command<'a>(&self) -> Command<'a> {
 		Command::new(self.name())
-		.about("install or setup docker")
+		.about("setup apt")
 		.arg(Arg::new("action")
-			.help("Sets the input file to use"))
-		.arg(Arg::with_name("debug")
+			.help("Sets the action to perform")
+			.required(true))
+		.arg(Arg::new("proxy")
+			.short('p')
+			.long("proxy")
+			.help("Sets a custom proxy")
+			.takes_value(true))			
+		.arg(Arg::new("debug")
 			.short('d')
 			.help("print debug information verbosely"))
 	}
 
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-		if let Some(input) = param.value_of("action"){
-			println!("action: {}", input);
-		}
+		if let Some(action) = param.value_of("action"){
+			self.action_manager.execute_action(action, self, param);
+		};
 		Ok(())
 	}
+}
+
+pub fn new() -> Box<dyn Module> {
+	let module = NpmModule{
+		action_manager: BasicActionManager{
+			actions:vec![
+				BasicAction{name:"test",  execute: action_test},
+				BasicAction{name:"setup", execute: action_setup},
+			]
+		}
+	};
+	Box::new(module)
+}
+
+fn action_test(module: &NpmModule, param:&ArgMatches){
+	println!("test action in {}", module.name());
+}
+
+fn action_setup(module: &NpmModule, param:&ArgMatches){
+	println!("setup action in {}", module.name());
 }

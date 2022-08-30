@@ -54,6 +54,14 @@ pub struct SubModule<'a> {
 }
 */
 fn main() -> std::io::Result<()> {
+	let modules: Vec<Box<dyn Module>> = vec![
+		apt::new(),
+		cargo::new(),
+		docker::new(),
+		git::new(),
+		npm::new(),
+		vscode::new(),
+	];
 
 	let mut cmd = Command::new("desa")
 						  .version("1.0")
@@ -81,14 +89,7 @@ fn main() -> std::io::Result<()> {
 										  .help("print debug information verbosely")));
 
 
-	let modules: Vec<Box<dyn Module>> = vec![
-		apt::new(),
-		cargo::new(),
-		Box::new(docker::DockerModule::new()),
-		Box::new(git::GitModule::new()),
-		Box::new(npm::NpmModule::new()),
-		Box::new(vscode::VscodeModule::new()),
-	];
+
 
 	for module in &modules {
 		cmd = cmd.subcommand(module.command());

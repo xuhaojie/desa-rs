@@ -1,21 +1,18 @@
-use crate::Module;
+use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
-
-pub struct DockerModule;
-
-impl DockerModule{
-	pub fn new() -> Self {
-		DockerModule{}
-	}
+struct DockerModule{
+	action_manager: BasicActionManager<Self>,
 }
-	
+
 impl Module for DockerModule{
+
 	fn name(&self) -> &'static str{
 		"docker"
 	}
+
 	fn command<'a>(&self) -> Command<'a> {
 		Command::new(self.name())
-		.about("install or setup docker")
+		.about("setup cargo")
 		.arg(Arg::new("action")
 			.help("Sets the action to perform")
 			.required(true))
@@ -29,26 +26,34 @@ impl Module for DockerModule{
 			.help("print debug information verbosely"))
 	}
 
-	fn execute(&self, param: &ArgMatches) -> std::io::Result<()>{
+	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
 		if let Some(action) = param.value_of("action"){
-			match action{
-				"install" => {
-					println!("install");
-
-
-				},
-				"setup" => {
-					println!("setup");
-					if let Some(action) = param.value_of("proxy"){
-						let config = param.value_of("proxy").unwrap_or("default.conf");
-						println!("Value for proxy: {}", config);
-					
-					}
-				},
-				_ => println!("unkonwn action: {}", action),
-			}
-
+			self.action_manager.execute_action(action, self, param);
 		};
 		Ok(())
+	}
+}
+
+pub fn new() -> Box<dyn Module> {
+	Box::new(DockerModule{
+		action_manager: BasicActionManager{
+			actions:vec![
+				BasicAction{name:"test",  execute: action_test},
+				BasicAction{name:"setup", execute: action_setup},
+			]
+		}
+	})
+}
+
+fn action_test(module: &DockerModule, param:&ArgMatches){
+	println!("test action in {}", module.name());
+}
+
+fn action_setup(module: &DockerModule, param:&ArgMatches){
+	println!("setup action in {}", module.name());
+	if let Some(action) = param.value_of("proxy"){
+		let config = param.value_of("proxy").unwrap_or("default.conf");
+		println!("Value for proxy: {}", config);
+	
 	}
 }
