@@ -1,6 +1,6 @@
 use crate::{Module , BasicAction, BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
-use utility::{download::*, process::*};
+use utility::{download::*, execute::*};
 
 struct VscodeModule{
 	action_manager: BasicActionManager<Self>,
@@ -62,7 +62,6 @@ fn action_download(module: &VscodeModule, param:&ArgMatches){
 
 fn action_setup(module: &VscodeModule, param:&ArgMatches){
 	println!("setup action in {}", module.name());
-	execute_command("");
 	if let Some(action) = param.value_of("proxy"){
 		let config = param.value_of("proxy").unwrap_or("default.conf");
 		println!("Value for proxy: {}", config);
