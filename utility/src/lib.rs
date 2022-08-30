@@ -1,4 +1,5 @@
 pub mod download;
+pub mod process;
 #[cfg(test)]
 mod tests {
     #[test]

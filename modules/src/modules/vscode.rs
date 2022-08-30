@@ -1,6 +1,6 @@
 use crate::Module;
 use clap::{Arg, ArgMatches, Command};
-use utility::download::*;
+use utility::{download::*, process::*};
 
 
 pub struct VscodeModule;
@@ -30,16 +30,24 @@ impl Module for VscodeModule{
 			.short('d')
 			.help("print debug information verbosely")))
 	}
-	fn execute(&self, param: &ArgMatches){
+	fn execute(&self, param: &ArgMatches) -> std::io::Result<()>{
 		println!("{} execute!", self.cmd());
 		if let Some(action) = param.value_of("action"){
 			match action{
 				"download" => {
 					println!("download");
-					download("").unwrap();
+					match download("http://httpbin.org/get"){
+						Ok(body) =>{
+							println!("{}", String::from_utf8_lossy(&body));
+						},
+						Err(e) =>{
+
+						},
+					}
 				},
 				"setup" => {
 					println!("setup");
+					execute_command("");
 					if let Some(action) = param.value_of("proxy"){
 						let config = param.value_of("proxy").unwrap_or("default.conf");
 						println!("Value for proxy: {}", config);
@@ -48,5 +56,6 @@ impl Module for VscodeModule{
 				_ => println!("unkonwn action: {}", action),
 			}
 		};
+		Ok(())
 	}
 }

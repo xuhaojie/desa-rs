@@ -27,7 +27,7 @@ impl Module for AptModule{
 			.short('d')
 			.help("print debug information verbosely")))
 	}
-	fn execute(&self, param: &ArgMatches){
+	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
 		println!("{} execute!", self.cmd());
 		if let Some(action) = param.value_of("action"){
 			match action{
@@ -48,6 +48,6 @@ impl Module for AptModule{
 			}
 
 		};
-
+		Ok(())
 	}
 }

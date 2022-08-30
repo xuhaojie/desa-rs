@@ -1,22 +1,20 @@
+use std::process::Command;
 
-pub fn execute_command(){
-	use std::process;
-
-	let output = if cfg!(target_os = "windows") {
-		process::Command::new("cmd")
-				.args(["/C", "echo hello12"])
-				.output()
-				.expect("failed to execute process")
+pub fn execute_command(cmd: &str){
+	// cmd_str可以是从输入流读取或从文件里读取
+	let cmd_str = if cfg!(target_os = "windows") {
+		// 这里不用\\而是/的话会被windows认为/tmp的/t是一个option而报错
+		"dir d:\\tmp".to_string()
 	} else {
-		process::Command::new("sh")
-				.arg("-c")
-				.arg("echo hello11")
-				.output()
-				.expect("failed to execute process")
+		"ls /Users".to_string()
 	};
 
+	let output = if cfg!(target_os = "windows") {
+		Command::new("cmd").arg("/c").arg(cmd_str).output().expect("cmd exec error!")
+	} else {
+		Command::new("sh").arg("-c").arg(cmd_str).output().expect("sh exec error!")
+	};
 
-	println!("status: {}", &output.status);
-	stdout().write_all(&output.stdout).unwrap();
-	stderr().write_all(&output.stderr).unwrap();
+	let output_str = String::from_utf8_lossy(&output.stdout);
+	println!("{}", output_str);
 }

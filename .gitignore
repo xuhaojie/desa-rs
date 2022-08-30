@@ -1,5 +1,6 @@
 .DS_Store
 Cargo.lock
+target
 modules/.DS_Store
 modules/src/.DS_Store
 modules/target

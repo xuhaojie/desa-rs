@@ -24,10 +24,11 @@ impl Module for NpmModule{
 			.help("print debug information verbosely")))
 	}
 
-	fn execute(&self, param: &ArgMatches){
+	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
 		println!("{} execute!", self.cmd());
 		if let Some(input) = param.value_of("action"){
 			println!("action: {}", input);
 		}
+		Ok(())
 	}
 }

@@ -8,7 +8,7 @@ use clap::{Arg, App, SubCommand, ArgMatches, Command};
 pub trait Module {
 	fn cmd(&self) -> &'static str;
 	fn register<'a>(&self, app : App<'a>) -> App<'a>;
-	fn execute(&self, param: &ArgMatches);
+	fn execute(&self, param: &ArgMatches) -> std::io::Result<()>;
 }
 pub struct SubModule<'a> {
 	cmd: &'a str,
