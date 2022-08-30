@@ -57,10 +57,8 @@ fn action_setup(module: &GitModule, param:&ArgMatches){
 	println!("setup action in {}", module.name());
 	
 	let output = ExecuteCommand::new("ls").args(["-l","-a"]).output().ok().expect("Failed to execute.");
-	println!("status: {}", output.status);
+
 	use std::io::{self, Write};
-	io::stdout().write_all(&output.stdout).unwrap();
-	io::stderr().write_all(&output.stderr).unwrap();
 
 	if let Some(user) = param.value_of("user"){
 		println!("user {}", user);
@@ -69,6 +67,7 @@ fn action_setup(module: &GitModule, param:&ArgMatches){
 		params.push(user);
 		
 		let output = ExecuteCommand::new("git").args(params).output().ok().expect("Failed to execute.");
+		println!("status: {}", output.status.code().unwrap());
 		//let cmd = Cmd{cmd:"git", params:&params};
 		//execute::execute_command(&cmd );
 		io::stdout().write_all(&output.stdout).unwrap();
@@ -82,6 +81,7 @@ fn action_setup(module: &GitModule, param:&ArgMatches){
 		params.push(email);		
 		//let cmd = Cmd{cmd:"git", params:&params};
 		let output = ExecuteCommand::new("git").args(params).output().ok().expect("Failed to execute.");
+		println!("status: {}", output.status);
 		io::stdout().write_all(&output.stdout).unwrap();
 		io::stderr().write_all(&output.stderr).unwrap();
 	}	
