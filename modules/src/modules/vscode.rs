@@ -92,7 +92,12 @@ impl Module for VScodeModule{
 			.short('o')
 			.long("os")
 			.help("os type")
-			.takes_value(true))				
+			.takes_value(true))
+		.arg(Arg::new("package")
+			.short('k')
+			.long("package")
+			.help("package type")
+			.takes_value(true))						
 		.arg(Arg::new("debug")
 			.short('d')
 			.help("print debug information verbosely"))
@@ -118,10 +123,8 @@ pub fn new() -> Box<dyn Module> {
 	Box::new(module)
 }
 
-fn gen_download_url(build: &BuildType, os: Platform, arch : Arch, pkg : PackageType) -> std::io::Result<String>  {
-	let arch = current_arch();
-	let os = current_platform();
-	let base = "https://code.visualstudio.com/sha/download";
+fn gen_download_url(base: &str, build: &BuildType, os: Platform, arch : Arch, pkg : PackageType) -> std::io::Result<String>  {
+	
 	let result = match os {
 		Platform::WINDOWS => {
 			let os_str = "win32";
@@ -154,10 +157,10 @@ fn gen_download_url(build: &BuildType, os: Platform, arch : Arch, pkg : PackageT
 		Platform::LINUX => {
 			let os_str = "linux";
 			let arch_str = match arch {
-				Arch::X86 => "",
+				Arch::X86_64 => "x64",
 				Arch::ARM => "armhf",
 				Arch::AARCH64 => "arm64",
-				_ =>  return Err(io::Error::new(io::ErrorKind::Other,format!("arch not supported on {} platform{}", os, arch.to_string()))),
+				_ =>  return Err(io::Error::new(io::ErrorKind::Other,format!("arch not supported on {} platform {}", os, arch.to_string()))),
 			};
 	
 			match pkg {
@@ -203,13 +206,26 @@ fn replace_vscode_download_url(url: &str, build : BuildType, newbase : &str) -> 
 }
 
 fn action_download(module: &VScodeModule, param:&ArgMatches) -> std::io::Result<()> {
-	println!("download action in {}", module.name());
 	let build = BuildType::STABLE;
-	let platform = current_platform();
+
+	let platform = match param.value_of("os") {
+		Some(os) => Platform::from(os),
+		None => current_platform(),
+	};
+
 	let arch = current_arch();
-	let pkg = PackageType::UNKNOWN;
-	
-	let download_url = gen_download_url(&build, platform, arch, pkg)?;
+	let pkg = match param.value_of("package") {
+		Some(pkg_type) => PackageType::from(pkg_type),
+		None => {
+			match platform {
+				Platform::LINUX => PackageType::DEB,
+				Platform::WINDOWS => PackageType::EXE,
+				_ => PackageType::UNKNOWN,
+			}
+		}
+	};
+
+	let download_url = gen_download_url("https://code.visualstudio.com/sha/download", &build, platform, arch, pkg)?;
 
 	let redirected_url = utility::download::get_redirected_url(&download_url)?;
 
