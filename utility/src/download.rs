@@ -1,6 +1,9 @@
 use bytes::{Bytes, Buf};
+use downloader::Downloader;
+use std::io::{self, BufWriter, Write};
+use std::path::Path;
 
-pub fn get_final_url(url:&str) -> String {
+pub fn get_final_url(url:&str) ->  std::io::Result<String>  {
 	
 	let client = reqwest::blocking::Client::new();
 	let mut headers = reqwest::header::HeaderMap::new();
@@ -17,46 +20,22 @@ pub fn get_final_url(url:&str) -> String {
 		.send();
 
 	match res {
-		Ok(r) => {
-			return r.url().as_str().to_string();
-		},
-		Err(e) => {
-			return url.to_string();
-		}
+		Ok(r) => Ok(r.url().as_str().to_string()),
+		Err(e) => Err(io::Error::new(io::ErrorKind::Other,e)),
 	}
 }
-/*
-pub fn get_final_url(&self) -> String{
-	let client = reqwest::Client::new();
-	client.get(url)
-	let body = reqwest::blocking::get(url)?
-    .bytes()?;
 
-}
-*/
-use std::thread::sleep;
-use std::time::Duration;
-use std::io::prelude::*;
-use std::io::{self, BufWriter, Write};
-
-pub fn progress(percent: usize) {
-    let mut _str: [char;101] = [' ';101];
-    let nchar:[char;4] = ['-','\\', '|', '/',];
-    let mut sw = BufWriter::new(io::stdout());
-	let progress_v = percent;
-    {
-        // 注意 /r xxxx 和 xxxx /r的区别： 前者是先定位到行头再输出xxxx， 后者则是先输出xxxx，再定位到行头。
-        // 前者再mac osx上能正确地看到输出，后者则一直不显示输出。
-        sw.write_fmt(format_args!("\r{}",'['));
-        _str[progress_v] = '=';
-        for i in _str.iter(){
-            sw.write_fmt(format_args!("{}", i));
-        }
-        sw.write_fmt(format_args!("{}", ']'));
-        let _ = sw.write_fmt(format_args!("\t({:3}%)\t[{}]", progress_v, nchar[progress_v % 4]));
-        sw.flush();
-
-    }
+pub fn file_name_from_url(url:&str) -> std::io::Result<String>  {
+	let fields: Vec<&str> = url.split('/').collect();
+	if fields.len() < 2 {
+		return Err(io::Error::new(io::ErrorKind::Other,"bad request"));
+	}
+	let file_name = fields[fields.len()-1];
+	if file_name.len() > 1 {
+		Ok(file_name.to_string())
+	} else {
+		return Err(io::Error::new(io::ErrorKind::Other,"can't separte file name"));
+	}
 }
 
 pub fn download(url: &str) -> Result<Bytes, Box<dyn std::error::Error>> { 
@@ -68,12 +47,12 @@ use tempfile::Builder;
 use std::io::copy;
 use std::fs::File;
 
-pub fn download_file(url:&str,file_name: &str) -> std::io::Result<()> {
+pub fn my_download_file(url:&str, file_name: &str) -> std::io::Result<()> {
 	let tmp_dir = Builder::new().prefix("example").tempdir()?;
 
 	let client = reqwest::blocking::Client::new();
-	let mut headers = reqwest::header::HeaderMap::new();
 
+	let mut headers = reqwest::header::HeaderMap::new();
 	headers.insert(reqwest::header::ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8".parse().unwrap());
 	headers.insert(reqwest::header::ACCEPT_ENCODING, "gzip, deflate".parse().unwrap());
 	headers.insert(reqwest::header::ACCEPT_LANGUAGE, "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3".parse().unwrap());
@@ -100,7 +79,89 @@ pub fn download_file(url:&str,file_name: &str) -> std::io::Result<()> {
 			return Err(io::Error::new(io::ErrorKind::Other,"request failed {}"));
 		}
 	}
-
-
 }
 
+// Define a custom progress reporter:
+struct SimpleReporterPrivate {
+    last_update: std::time::Instant,
+    max_progress: Option<u64>,
+    message: String,
+}
+struct SimpleReporter {
+    private: std::sync::Mutex<Option<SimpleReporterPrivate>>,
+}
+
+impl SimpleReporter {
+    fn create() -> std::sync::Arc<Self> {
+        std::sync::Arc::new(Self {
+            private: std::sync::Mutex::new(None),
+        })
+    }
+}
+
+impl downloader::progress::Reporter for SimpleReporter {
+    fn setup(&self, max_progress: Option<u64>, message: &str) {
+        let private = SimpleReporterPrivate {
+            last_update: std::time::Instant::now(),
+            max_progress,
+            message: message.to_owned(),
+        };
+
+        let mut guard = self.private.lock().unwrap();
+        *guard = Some(private);
+    }
+
+    fn progress(&self, current: u64) {
+        if let Some(p) = self.private.lock().unwrap().as_mut() {
+            let max_bytes = match p.max_progress {
+                Some(bytes) => format!("{:?}", bytes),
+                None => "{unknown}".to_owned(),
+            };
+            if p.last_update.elapsed().as_millis() >= 1000 {
+                println!(
+                    "{} of {} bytes. [{}]",
+                    current, max_bytes, p.message
+                );
+                p.last_update = std::time::Instant::now();
+            }
+        }
+    }
+
+    fn set_message(&self, message: &str) {
+        println!("Message changed to: {}", message);
+    }
+
+    fn done(&self) {
+        let mut guard = self.private.lock().unwrap();
+        *guard = None;
+        println!("[DONE]");
+    }
+}
+
+
+pub fn download_file(url: &str, folder: &Path)  -> std::io::Result<()> {
+    let mut downloader = Downloader::builder()
+        .download_folder(folder)
+        .parallel_requests(1)
+        .build()
+        .unwrap();
+
+    let dl = downloader::Download::new(url);
+	let dl = dl.progress(SimpleReporter::create());
+
+    let result = downloader.download(&[dl]).unwrap();
+
+    for r in result {
+        match r {
+            Err(e) => {
+				println!("Error: {}", e.to_string());
+				return Err(io::Error::new(io::ErrorKind::Other,"failed download file"));
+			}
+            Ok(s) => {
+//				println!("Success: {}", &s);
+				return Ok(());
+			}
+        };
+    }
+	Ok(())
+}

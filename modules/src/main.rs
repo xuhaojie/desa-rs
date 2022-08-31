@@ -54,12 +54,6 @@ pub struct SubModule<'a> {
 }
 */
 fn main() -> std::io::Result<()> {
-	//utility::download::progress(30);
-	//return Ok(());
-	let url = get_final_url("https://www.vmware.com/go/getworkstation-win");
-
-	println!("url: {}", url);
-
 
 	let modules: Vec<Box<dyn Module>> = vec![
 		apt::new(),

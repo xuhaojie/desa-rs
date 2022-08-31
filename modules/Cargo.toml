@@ -16,5 +16,5 @@ codegen-units = 1
 panic = "abort"
 
 [dependencies]
-clap = "3.2"
 utility = { path = "../utility" }
+clap = "3.2"

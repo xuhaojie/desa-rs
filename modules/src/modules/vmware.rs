@@ -1,6 +1,8 @@
 use crate::{Module , BasicAction, BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
-use utility::download::download_file;
+use utility::download::*;
+use std::path::Path;
+use std::fs::{File, self};
 struct VMWareModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -58,19 +60,36 @@ fn action_download(module: &VMWareModule, param:&ArgMatches){
 
 	let	url_windows = "https://www.vmware.com/go/getworkstation-win";
 	let url_linux = "https://www.vmware.com/go/getworkstation-linux";
-	let url_mac = "https://www.vmware.com/go/getfusion";
+	let url_mac = "https://www.vmware.com/go/getfusion!!!";
 	let url = url_mac;
 
-	let target_url = utility::download::get_final_url(url);
-
-	println!("get target url: {}", target_url);
-	
-	let fields: Vec<&str> = target_url.split('/').collect();
-	if fields.len() < 2 {
-		return; // Err(io::Error::new(io::ErrorKind::Other,"bad request"));
+	match  utility::download::get_final_url(url) {
+		Ok(url) => {
+			println!("get target url: {}", url);
+			if let Ok(file_name) = file_name_from_url(&url) {
+				println!("get filename: {}", file_name);
+				let over_write = true;
+				let target_folder = std::path::Path::new("/tmp");
+				let target_file = Path::new("/tmp").join(file_name);
+				if target_file.exists(){
+					if over_write {
+						fs::remove_file(target_file.as_path());
+					} else {
+						println!("file exists");
+						return
+					}
+				}
+					//download_file(target_url.as_str(), path.as_path());
+				download_file(url.as_str(), target_folder);		
+		
+			} else {
+				println!("can't get file from url {}", url);
+				return
+			}
+		},
+		Err(e) => {
+			println!("{}", e.to_string())
+		},
 	}
-	let file_name = fields[fields.len()-1];
-	println!("get filename: {}", file_name);
-	download_file(target_url.as_str(),file_name);
 	return
 }
