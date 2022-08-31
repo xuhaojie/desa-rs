@@ -1,6 +1,6 @@
 use crate::{Module , BasicAction, BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
-use utility::download::*;
+use utility::{platform::*,download::*};
 use std::io;
 struct VMWareModule{
 	action_manager: BasicActionManager<Self>,
@@ -56,15 +56,16 @@ fn action_download(module: &VMWareModule, param:&ArgMatches) -> std::io::Result<
 	println!("download action in {}", module.name());
 
 	let os = match param.value_of("os") {
-		Some(os) => os,
-		None => std::env::consts::OS,
+		Some(os) => Platform::from(os),
+		None => current_platform(),
 	};
+
 	let url = match os {
-		"windows" =>  "https://www.vmware.com/go/getworkstation-win",
-		"linux" =>  "https://www.vmware.com/go/getworkstation-linux",
-		"macos" => "https://www.vmware.com/go/getfusion",
+		Platform::WINDOWS => "https://www.vmware.com/go/getworkstation-win",
+		Platform::LINUX => "https://www.vmware.com/go/getworkstation-linux",
+		Platform::MACOS => "https://www.vmware.com/go/getfusion",
 		_ => {
-			return Err(io::Error::new(io::ErrorKind::Other,"please specify correct os type"));
+			return Err(io::Error::new(io::ErrorKind::Other,format!("not support os type {}", os)));
 		},
 	};
 	let target_url = utility::download::get_final_url(url)?;

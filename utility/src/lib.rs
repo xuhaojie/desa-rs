@@ -1,5 +1,7 @@
 pub mod download;
 pub mod execute;
+pub mod arch;
+pub mod platform;
 #[cfg(test)]
 mod tests {
     #[test]
