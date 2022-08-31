@@ -23,8 +23,8 @@ pub fn execute_command(cmd: &Cmd) -> std::io::Result<i32>{
 */
 
 	let output = Command::new(cmd.cmd).args(&cmd.params).output().expect("cmd exec error!");
-	io::stdout().write_all(&output.stdout).unwrap();
-	io::stderr().write_all(&output.stderr).unwrap();
+//	io::stdout().write_all(&output.stdout).unwrap();
+//	io::stderr().write_all(&output.stderr).unwrap();
 	let output_str = String::from_utf8_lossy(&output.stdout);
 //	println!("status: {}", output.status);
 //	println!("{}", output_str);
@@ -32,6 +32,4 @@ pub fn execute_command(cmd: &Cmd) -> std::io::Result<i32>{
 		Some(code) => Ok(code),
 		None => Err(io::Error::new(io::ErrorKind::Other,format!("exec {} failed", cmd.cmd))),
 	}
-
-
 }

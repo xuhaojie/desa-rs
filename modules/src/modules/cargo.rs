@@ -1,11 +1,14 @@
 use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
+use std::env;
 use std::io;
 use std::io::prelude::*;
 use std::io::BufWriter;
 use std::fs::File;
+use std::path::Path;
 
+use utility::execute::{self, Cmd};
 struct CargoModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -20,13 +23,18 @@ impl Module for CargoModule{
 		Command::new(self.name())
 		.about("setup cargo")
 		.arg(Arg::new("action")
-			.help("Sets the action to perform")
+			.help("Set the action to perform")
 			.required(true))
 		.arg(Arg::new("mirror")
 			.short('m')
 			.long("mirror")
 			.help("Set mirror name")
 			.takes_value(true))
+		.arg(Arg::new("path")
+			.short('p')
+			.long("path")
+			.help("Set start path")
+			.takes_value(true))			
 		.arg(Arg::new("debug")
 			.short('d')
 			.help("print debug information verbosely"))
@@ -44,15 +52,61 @@ pub fn new() -> Box<dyn Module> {
 	Box::new(CargoModule{
 		action_manager: BasicActionManager{
 			actions:vec![
-				BasicAction{name:"test",  execute: action_test},
+				BasicAction{name:"clean",  execute: action_clean},
 				BasicAction{name:"setup", execute: action_setup},
 			]
 		}
 	})
 }
 
-fn action_test(module: &CargoModule, param:&ArgMatches)  -> std::io::Result<()>{
-	println!("test action in {}", module.name());
+
+fn search_cargo_projects(start_path: &str, projects: &mut Vec<String>) -> std::io::Result<()> {
+	for entry in std::fs::read_dir(start_path)? {
+		let entry = entry?;
+		let path = entry.path();
+	
+		let metadata = std::fs::metadata(&path)?;
+		if metadata.is_file() {
+			if let Some(p) = path.to_str() {
+				if let Some(file_name) =path.file_name() {
+					if file_name == "Cargo.toml" {
+						projects.push(start_path.to_string());
+					}
+				}
+			}
+		}
+		if metadata.is_dir() {
+			if let Some(p) = path.to_str() {
+				search_cargo_projects(p, projects)?
+			}
+		}
+	}
+	Ok(())
+}
+
+fn action_clean(module: &CargoModule, param:&ArgMatches)  -> std::io::Result<()>{
+
+	let path = match param.value_of("path"){
+		Some(p) => p.to_owned(),
+		None => return Err(io::Error::new(io::ErrorKind::Other,"please specify a path")),
+	};
+
+	let mut projects = Vec::<String>::new();
+	search_cargo_projects(&path, &mut projects)?;
+
+	for project in projects.iter() {
+
+		let mut clean_cmd = std::process::Command::new("cargo");
+		
+		clean_cmd.current_dir(project);
+
+		let status = clean_cmd.arg("clean").status().expect("cmd exec error!");
+
+		match status.code() {
+			Some(0) => println!("clean {} succeed", project),
+			_ => println!("clean {} failed", project),
+		};
+	}
 	Ok(())
 }
 
@@ -82,7 +136,6 @@ fn action_setup(module: &CargoModule, param:&ArgMatches) -> std::io::Result<()>{
 	let mirros = ["tuna", "sjtu", "ustc", "rustcc"];
 
 	if let Some(mirror) = param.value_of("mirror"){
-		
 		let mut find = false;
 		for m in mirros.iter() {
 			if *m == mirror {
