@@ -2,6 +2,9 @@ use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use std::io;
+use std::io::prelude::*;
+use std::io::BufWriter;
+use std::fs::File;
 
 struct CargoModule{
 	action_manager: BasicActionManager<Self>,
@@ -55,98 +58,70 @@ fn action_test(module: &CargoModule, param:&ArgMatches)  -> std::io::Result<()>{
 
 fn action_setup(module: &CargoModule, param:&ArgMatches) -> std::io::Result<()>{
 	println!("setup action in {}", module.name());
-/*
+
 	let mut lines = vec![
-		"[source.crates-io]",
-		"registry =\"https://github.com/rust-lang/crates.io-index\"",
-		"# 指定镜像"
-		"replace-with = '镜像源名'"
-		"# 中国科学技术大学"
-		"[source.ustc]registry = \"https://mirrors.ustc.edu.cn/crates.io-index\""
-		# 上海交通大学
-		[source.sjtu]registry = "https://mirrors.sjtug.sjtu.edu.cn/git/crates.io-index/" 
-		# 清华大学
-		[source.tuna]registry = "https://mirrors.tuna.tsinghua.edu.cn/git/crates.io-index.git"
-		# rustcc社区
-		[source.rustcc]registry = "https://code.aliyun.com/rustcc/crates.io-index.git"
-		"registry = \"https://mirrors.ustc.edu.cn/crates.io-index\"",
-	}
-
+		"[source.crates-io]\n",
+		"registry =\"https://github.com/rust-lang/crates.io-index\"\n",
+		"# 指定镜像\n",
+		"replace-with = '镜像源名'\n",
+		"# 中国科学技术大学\n",
+		"[source.ustc]\n",
+		"registry = \"https://mirrors.ustc.edu.cn/crates.io-index\"\n\n",
+		"# 上海交通大学\n",
+		"[source.sjtu]\n",
+		"registry = \"https://mirrors.sjtug.sjtu.edu.cn/git/crates.io-index\"\n\n",
+		"# 清华大学\n",
+		"[source.tuna]\n",
+		"registry = \"https://mirrors.tuna.tsinghua.edu.cn/git/crates.io-index.git\"\n\n",
+		"# rustcc社区\n",
+		"[source.rustcc]\n",
+		"registry = \"https://code.aliyun.com/rustcc/crates.io-index.git\"\n\n",
 	];
-*/
-	//# 如：tuna、sjtu、ustc，或者 rustcc
 
-	let home_dir = match dirs::home_dir() {
-		Some(path) => path,
-		None => return Err(io::Error::new(io::ErrorKind::Other,"can't get home dir")),
-	};
+	//# 如：
+	let mirros = ["tuna", "sjtu", "ustc", "rustcc"];
 
-	let target_path = home_dir.join(".cargo");
-	let target_file = target_path.join("config");
-	if !target_path.exists(){
-		std::fs::create_dir(target_path);
-	}
-	if target_file.exists(){
-		std::fs::remove_file(target_file.as_path());
-	}
- /* 
 	if let Some(mirror) = param.value_of("mirror"){
-		lines[4] = &format!("registry = \"{}\"", mirror);
+		
+		let mut find = false;
+		for m in mirros.iter() {
+			if *m == mirror {
+				find = true;
+				break;
+			}
+		};		
+		if find {
+			let set = format!("replace-with = \"{}\"\n", mirror).to_string();
+			lines[3] = &set;
+
+			let home_dir = match dirs::home_dir() {
+				Some(path) => path,
+				None => return Err(io::Error::new(io::ErrorKind::Other,"can't get home dir")),
+			};
+		
+			let target_path = home_dir.join(".cargo");
+			let target_file = target_path.join("config");
+			let backup_file = target_path.join("config.bak");
+			if !target_path.exists(){
+				std::fs::create_dir(target_path);
+			}
+			if target_file.exists(){
+				if backup_file.exists(){
+					std::fs::remove_file(backup_file.as_path());
+				}
+				std::fs::rename(target_file.as_path(), backup_file.as_path());
+			}
+
+			let mut buffer = BufWriter::new(std::fs::File::create(target_file)?);
+			for line in lines.iter() {
+				buffer.write_all(line.as_bytes())?;
+			}
+			buffer.flush()?;
+		} else {
+			return Err(io::Error::new(io::ErrorKind::Other,"invalid mirror"));
+		};
+		
 	}
-*/
-
-
-
-
 
 	Ok(())
 }
-
-
-/*
-
-func SetupCargoProxy(mirror string) error {
-	lines := []string{
-		"[source.crates-io]",
-		"registry = \"https://github.com/rust-lang/crates.io-index\"",
-		"replace-with = 'mirror'",
-		"[source.mirror]",
-		"registry = \"https://mirrors.ustc.edu.cn/crates.io-index\"",
-	}
-
-	lines[4] = fmt.Sprintf("registry = \"%s\"", mirror)
-
-	cfgSize := 0
-	for _, line := range lines {
-		cfgSize += len(line) + 1
-	}
-	cfg_data := make([]byte, 0, cfgSize)
-
-	for _, line := range lines {
-		cfg_data = append(cfg_data, line...)
-		cfg_data = append(cfg_data, '\n')
-	}
-
-	userHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
-	targetPath := path.Join(userHomeDir, ".cargo")
-	targetFile := path.Join(targetPath, "config")
-	exist, err := common.PathExists(targetPath)
-	if err != nil {
-		return err
-	}
-	if !exist {
-		err := os.Mkdir(targetPath, 0664)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = ioutil.WriteFile(targetFile, []byte(cfg_data), os.FileMode(0644))
-	return err
-}
-
-*/
