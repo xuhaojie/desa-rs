@@ -68,7 +68,7 @@ fn action_download(module: &VMWareModule, param:&ArgMatches) -> std::io::Result<
 			return Err(io::Error::new(io::ErrorKind::Other,format!("not support os type {}", os)));
 		},
 	};
-	let target_url = utility::download::get_final_url(url)?;
+	let target_url = utility::download::get_redirected_url(url)?;
 	println!("get target url: {}", target_url);
 	let target_folder = std::path::Path::new("/tmp");
 	download_file(target_url.as_str(), target_folder, true)

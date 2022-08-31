@@ -3,7 +3,7 @@ use downloader::Downloader;
 use std::io::{self, BufWriter, Write};
 use std::path::Path;
 
-pub fn get_final_url(url:&str) ->  std::io::Result<String>  {
+pub fn get_redirected_url(url:&str) ->  std::io::Result<String>  {
 	
 	let client = reqwest::blocking::Client::new();
 	let mut headers = reqwest::header::HeaderMap::new();

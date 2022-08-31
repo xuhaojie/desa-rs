@@ -118,37 +118,7 @@ pub fn new() -> Box<dyn Module> {
 	Box::new(module)
 }
 
-fn action_download(module: &VScodeModule, param:&ArgMatches) -> std::io::Result<()> {
-	println!("download action in {}", module.name());
-
-	let os = match param.value_of("os") {
-		Some(os) => os,
-		None => std::env::consts::OS,
-	};
-	let url = match os {
-		"windows" =>  "https://www.vmware.com/go/getworkstation-win",
-		"linux" =>  "https://www.vmware.com/go/getworkstation-linux",
-		"macos" => "https://www.vmware.com/go/getfusion",
-		_ => {
-			return Err(io::Error::new(io::ErrorKind::Other,"please specify correct os type"));
-		},
-	};
-	let target_url = utility::download::get_final_url(url)?;
-	println!("get target url: {}", target_url);
-	let target_folder = std::path::Path::new("/tmp");
-	download_file(target_url.as_str(), target_folder, true)
-}
-
-fn action_setup(module: &VScodeModule, param:&ArgMatches) -> std::io::Result<()>{
-	println!("setup action in {}", module.name());
-	if let Some(action) = param.value_of("proxy"){
-		let config = param.value_of("proxy").unwrap_or("default.conf");
-		println!("Value for proxy: {}", config);
-	}
-	Ok(())
-}
-
-fn genVscodeUrl(build: BuildType, os: Platform, arch : Arch, pkg : PackageType) -> std::io::Result<String>  {
+fn gen_download_url(build: &BuildType, os: Platform, arch : Arch, pkg : PackageType) -> std::io::Result<String>  {
 	let arch = current_arch();
 	let os = current_platform();
 	let base = "https://code.visualstudio.com/sha/download";
@@ -200,16 +170,11 @@ fn genVscodeUrl(build: BuildType, os: Platform, arch : Arch, pkg : PackageType) 
 		Platform::MACOS => {
 			let os_str = "darwin";
 			let arch_str = match arch {
-				Arch::X86 => "",
+				Arch::X86_64 => "",
 				Arch::AARCH64 => "arm64",
-				_ =>  return Err(io::Error::new(io::ErrorKind::Other,format!("arch not supported on {} platform{}", os, arch.to_string()))),
+				_ =>  return Err(io::Error::new(io::ErrorKind::Other,format!("arch not supported on {} platform {}", os, arch.to_string()))),
 			};
 	
-			match pkg {
-				PackageType::DEB | PackageType::RPM => format!("{}?build={}&os={}-{}-{}", base, build, os_str, pkg, arch_str),
-				PackageType::ARCHIVE => format!("{}?build={}&os={}-{}", base, build, os, arch_str),
-				_ => return Err(io::Error::new(io::ErrorKind::Other,format!("package type not supported on {} platform {}", os, pkg))),
-			};
 			if arch_str.len() > 0 {
 				format!("{}?build={}&os={}-{}", base, build, os_str, arch_str)
 			} else {
@@ -222,4 +187,43 @@ fn genVscodeUrl(build: BuildType, os: Platform, arch : Arch, pkg : PackageType) 
 	};
 
 	return Ok(result.to_string());
+}
+
+fn replace_vscode_download_url(url: &str, build : BuildType, newbase : &str) -> String {
+	// newbase = "https://vscode.cdn.azure.cn"
+	//https: //vscode.cdn.azure.cn/stable/b4c1bd0a9b03c749ea011b06c6d2676c8091a70c/VSCodeUserSetup-x64-1.57.0.exe
+
+	println!("url:{}",url);
+	let target_str = format!("/{}/",build);
+	if let Some(index) = url.find(&target_str){
+		format!("{}{}",newbase, &url[index..])
+	} else {
+		url.to_string()
+	}
+}
+
+fn action_download(module: &VScodeModule, param:&ArgMatches) -> std::io::Result<()> {
+	println!("download action in {}", module.name());
+	let build = BuildType::STABLE;
+	let platform = current_platform();
+	let arch = current_arch();
+	let pkg = PackageType::UNKNOWN;
+	
+	let download_url = gen_download_url(&build, platform, arch, pkg)?;
+
+	let redirected_url = utility::download::get_redirected_url(&download_url)?;
+
+	let  final_url = replace_vscode_download_url(&redirected_url, build, "https://vscode.cdn.azure.cn");
+	println!("final_url: {}", final_url);
+	let target_folder = std::path::Path::new("/tmp");
+	download_file(&final_url, target_folder, true)
+}
+
+fn action_setup(module: &VScodeModule, param:&ArgMatches) -> std::io::Result<()>{
+	println!("setup action in {}", module.name());
+	if let Some(action) = param.value_of("proxy"){
+		let config = param.value_of("proxy").unwrap_or("default.conf");
+		println!("Value for proxy: {}", config);
+	}
+	Ok(())
 }
