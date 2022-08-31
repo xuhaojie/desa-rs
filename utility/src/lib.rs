@@ -1,3 +1,4 @@
+pub mod clean;
 pub mod download;
 pub mod execute;
 pub mod arch;

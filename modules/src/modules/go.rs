@@ -1,9 +1,9 @@
-use crate::{Module , BasicAction, BasicActionManager};
+use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use std::io::{self, prelude::*,BufWriter};
+use utility::{execute::*, clean::*};
 
-use utility::{execute::{self, Cmd}, clean::*};
 struct CargoModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -11,12 +11,12 @@ struct CargoModule{
 impl Module for CargoModule{
 
 	fn name(&self) -> &'static str{
-		"cargo"
+		"go"
 	}
 
 	fn command<'a>(&self) -> Command<'a> {
 		Command::new(self.name())
-		.about("setup cargo")
+		.about("setup go")
 		.arg(Arg::new("action")
 			.help("Set the action to perform")
 			.required(true))
@@ -62,9 +62,22 @@ fn action_clean(module: &CargoModule, param:&ArgMatches)  -> std::io::Result<()>
 	};
 
 	let mut projects = Vec::<String>::new();
+	search_projects(&path, "go.mod", &mut projects)?;
 
-	search_projects(&path, "Cargo.toml", &mut projects)?;
-	return clean_projects(&projects, "cargo", &["clean"]);
+	for project in projects.iter() {
+
+		let mut clean_cmd = std::process::Command::new("go");
+		
+		clean_cmd.current_dir(project);
+
+		let status = clean_cmd.arg("clean").status().expect("cmd exec error!");
+
+		match status.code() {
+			Some(0) => println!("clean {} succeed", project),
+			_ => println!("clean {} failed", project),
+		};
+	}
+	Ok(())
 }
 
 fn action_setup(module: &CargoModule, param:&ArgMatches) -> std::io::Result<()>{
