@@ -2,8 +2,8 @@ use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use std::io::{self, prelude::*,BufWriter};
-use utility::{execute::*, clean::*};
-
+use utility::{execute, clean::*};
+use utility::execute::Cmd;
 struct CargoModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -48,7 +48,7 @@ pub fn new() -> Box<dyn Module> {
 		action_manager: BasicActionManager{
 			actions:vec![
 				BasicAction{name:"clean",  execute: action_clean},
-				BasicAction{name:"setup", execute: action_setup},
+				BasicAction{name:"proxy", execute: action_setup_proxy},
 			]
 		}
 	})
@@ -80,71 +80,54 @@ fn action_clean(module: &CargoModule, param:&ArgMatches)  -> std::io::Result<()>
 	Ok(())
 }
 
-fn action_setup(module: &CargoModule, param:&ArgMatches) -> std::io::Result<()>{
-	println!("setup action in {}", module.name());
-
-	let mut lines = vec![
-		"[source.crates-io]\n",
-		"registry =\"https://github.com/rust-lang/crates.io-index\"\n",
-		"# 指定镜像\n",
-		"replace-with = '镜像源名'\n",
-		"# 中国科学技术大学\n",
-		"[source.ustc]\n",
-		"registry = \"https://mirrors.ustc.edu.cn/crates.io-index\"\n\n",
-		"# 上海交通大学\n",
-		"[source.sjtu]\n",
-		"registry = \"https://mirrors.sjtug.sjtu.edu.cn/git/crates.io-index\"\n\n",
-		"# 清华大学\n",
-		"[source.tuna]\n",
-		"registry = \"https://mirrors.tuna.tsinghua.edu.cn/git/crates.io-index.git\"\n\n",
-		"# rustcc社区\n",
-		"[source.rustcc]\n",
-		"registry = \"https://code.aliyun.com/rustcc/crates.io-index.git\"\n\n",
-	];
-
-	//# 如：
-	let mirros = ["tuna", "sjtu", "ustc", "rustcc"];
-
+fn action_setup_proxy(module: &CargoModule, param:&ArgMatches) -> std::io::Result<()>{
+	println!("setup proxy action in {}", module.name());
+	//$ go env -w GO111MODULE=on
+	//$ go env -w GOPROXY=https://goproxy.cn,direct
+	let mirros = ["goproxy.cn","goproxy.io"];
 	if let Some(mirror) = param.value_of("mirror"){
-		let mut find = false;
+		
+		let mut target = -1;
+		let mut index = 0;
 		for m in mirros.iter() {
 			if *m == mirror {
-				find = true;
+				target = index;
 				break;
 			}
-		};		
-		if find {
-			let set = format!("replace-with = \"{}\"\n", mirror).to_string();
-			lines[3] = &set;
+			index += 1;
+		}
 
-			let home_dir = match dirs::home_dir() {
-				Some(path) => path,
-				None => return Err(io::Error::new(io::ErrorKind::Other,"can't get home dir")),
-			};
-		
-			let target_path = home_dir.join(".cargo");
-			let target_file = target_path.join("config");
-			let backup_file = target_path.join("config.bak");
-			if !target_path.exists(){
-				std::fs::create_dir(target_path);
-			}
-			if target_file.exists(){
-				if backup_file.exists(){
-					std::fs::remove_file(backup_file.as_path());
-				}
-				std::fs::rename(target_file.as_path(), backup_file.as_path());
-			}
-
-			let mut buffer = BufWriter::new(std::fs::File::create(target_file)?);
-			for line in lines.iter() {
-				buffer.write_all(line.as_bytes())?;
-			}
-			buffer.flush()?;
-		} else {
+		if target < 0 {
 			return Err(io::Error::new(io::ErrorKind::Other,"invalid mirror"));
-		};
-		
+		} else {
+			let url = match mirror {
+				"goproxy.cn" => "https://goproxy.cn,direct",
+				"goproxy.io" => "https://proxy.golang.com.cn,direct",
+				_ => "https://goproxy.cn,direct",
+			};
+
+			let mut cmd1 = Cmd{cmd:"go", params: vec!["env", "-w", "GO111MODULE=on"]};
+			//let cmd = format!("git config --global user.name {}", user);
+
+			if let Ok(code) = execute::execute_command(&cmd1) {
+				if 0 == code {
+					println!("exec {} succeed", cmd1.to_string());
+				}
+			}
+			let proxy = format!("GOPROXY={}", url);
+			let mut cmd2 = Cmd{cmd:"go", params: vec!["env", "-w", &proxy]};
+			if let Ok(code) = execute::execute_command(&cmd2) {
+				if 0 == code {
+					println!("exec {} succeed", cmd2.to_string());
+				}
+			}
+		}
 	}
+
+
+
+
+	
 
 	Ok(())
 }

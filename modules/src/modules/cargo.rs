@@ -2,8 +2,8 @@ use crate::{Module , BasicAction, BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use std::io::{self, prelude::*,BufWriter};
+use utility::clean::*;
 
-use utility::{execute::{self, Cmd}, clean::*};
 struct CargoModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -48,7 +48,7 @@ pub fn new() -> Box<dyn Module> {
 		action_manager: BasicActionManager{
 			actions:vec![
 				BasicAction{name:"clean",  execute: action_clean},
-				BasicAction{name:"setup", execute: action_setup},
+				BasicAction{name:"proxy", execute: action_setup_proxy},
 			]
 		}
 	})
@@ -67,9 +67,7 @@ fn action_clean(module: &CargoModule, param:&ArgMatches)  -> std::io::Result<()>
 	return clean_projects(&projects, "cargo", &["clean"]);
 }
 
-fn action_setup(module: &CargoModule, param:&ArgMatches) -> std::io::Result<()>{
-	println!("setup action in {}", module.name());
-
+fn action_setup_proxy(module: &CargoModule, param:&ArgMatches) -> std::io::Result<()>{
 	let mut lines = vec![
 		"[source.crates-io]\n",
 		"registry =\"https://github.com/rust-lang/crates.io-index\"\n",
@@ -127,6 +125,7 @@ fn action_setup(module: &CargoModule, param:&ArgMatches) -> std::io::Result<()>{
 				buffer.write_all(line.as_bytes())?;
 			}
 			buffer.flush()?;
+			println!("set proxy to {} succeeded", mirror);
 		} else {
 			return Err(io::Error::new(io::ErrorKind::Other,"invalid mirror"));
 		};
