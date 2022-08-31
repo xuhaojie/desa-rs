@@ -37,14 +37,7 @@ impl <T>BasicActionManager<T> {
 	fn execute_action(&self, name: &str,module : &T, param: &ArgMatches) -> std::io::Result<()> {
 		for action in &self.actions {
 			if action.name == name {
-				//cmd = module.register(cmd);
-				println!("{}",action.name);
-				//return (action.execute)(module, param);
-				let result = (action.execute)(module, param);
-				// if let Err(e) =  result{
-				// 	println!("{}", e.to_string());
-				// }
-				return result;
+				return (action.execute)(module, param);
 			}
 		}
 		Ok(())
@@ -105,7 +98,7 @@ fn main() -> std::io::Result<()> {
 
 	
 	let matches = cmd.get_matches();
-
+/*
 	// 如果用户提供、则获取该值作为config，或者默认使用 “default.conf”
 	let config = matches.value_of("config").unwrap_or("default.conf");
 	println!("Value for config: {}", config);
@@ -116,7 +109,7 @@ fn main() -> std::io::Result<()> {
 	if let Some(input) = matches.value_of("INPUT"){
 		println!("Using input file: {}", input);
 	}
-
+*/
 	// 根据用户使用“详细”标志的次数来改变输出
 	// (比如 'myprog -v -v -v' or 'myprog -vvv' vs 'myprog -v'
 	/*
@@ -133,7 +126,7 @@ fn main() -> std::io::Result<()> {
 
 	for module in &modules {
 		if let Some(matches) = matches.subcommand_matches(module.name()) {
-			println!("execute module {} !", module.name());
+			//println!("execute module {}", module.name());
 			let result = module.execute(matches);
 			if let Err(e) =  result{
 				println!("{}", e.to_string());

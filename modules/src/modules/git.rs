@@ -2,6 +2,8 @@ use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
 use std::process::Command as ExecuteCommand;
 use utility::execute::{self, Cmd};
+
+
 struct GitModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -42,49 +44,34 @@ pub fn new() -> Box<dyn Module> {
 	Box::new(GitModule{
 		action_manager: BasicActionManager{
 			actions:vec![
-				BasicAction{name:"test",  execute: action_test},
 				BasicAction{name:"setup", execute: action_setup},
 			]
 		}
 	})
 }
 
-fn action_test(module: &GitModule, param:&ArgMatches) -> std::io::Result<()>{
-	println!("test action in {}", module.name());
-	Ok(())
-}
-
 fn action_setup(module: &GitModule, param:&ArgMatches) -> std::io::Result<()>{
-	println!("setup action in {}", module.name());
-	
-	let output = ExecuteCommand::new("ls").args(["-l","-a"]).output().ok().expect("Failed to execute.");
-
-	use std::io::{self, Write};
 
 	if let Some(user) = param.value_of("user"){
-		println!("user {}", user);
+		let mut cmd = Cmd{cmd:"git", params: vec!["config", "--global", "user.name"]};
 		//let cmd = format!("git config --global user.name {}", user);
-		let mut params = vec!["config", "--global", "user.name"];
-		params.push(user);
-		
-		let output = ExecuteCommand::new("git").args(params).output().ok().expect("Failed to execute.");
-		println!("status: {}", output.status.code().unwrap());
-		//let cmd = Cmd{cmd:"git", params:&params};
-		//execute::execute_command(&cmd );
-		io::stdout().write_all(&output.stdout).unwrap();
-		io::stderr().write_all(&output.stderr).unwrap();
+		cmd.params.push(user);
+		if let Ok(code) = execute::execute_command(&cmd) {
+			if 0 == code {
+				println!("exec {} succeed", cmd.to_string());
+			}
+		}
 	}
 
 	if let Some(email) = param.value_of("email"){
-		println!("email {}", email);
-		//let cmd = format!("git config --global user.email {}",email);
-		let mut params = vec!["config", "--global", "user.email"];
-		params.push(email);		
-		//let cmd = Cmd{cmd:"git", params:&params};
-		let output = ExecuteCommand::new("git").args(params).output().ok().expect("Failed to execute.");
-		println!("status: {}", output.status);
-		io::stdout().write_all(&output.stdout).unwrap();
-		io::stderr().write_all(&output.stderr).unwrap();
+		let mut cmd = Cmd{cmd:"git", params: vec!["config", "--global", "user.email"]};
+		//let cmd = format!("git config --global user.name {}", user);
+		cmd.params.push(email);
+		if let Ok(code) = execute::execute_command(&cmd) {
+			if 0 == code {
+				println!("exec {} succeed", cmd.to_string());
+			}
+		}
 	}
 	Ok(())
 	
