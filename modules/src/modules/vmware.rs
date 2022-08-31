@@ -1,8 +1,6 @@
 use crate::{Module , BasicAction, BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
 use utility::download::*;
-use std::path::Path;
-use std::fs::{File, self};
 use std::io;
 struct VMWareModule{
 	action_manager: BasicActionManager<Self>,
@@ -24,14 +22,18 @@ impl Module for VMWareModule{
 			.short('p')
 			.long("proxy")
 			.help("Sets a custom proxy")
-			.takes_value(true))			
+			.takes_value(true))
+		.arg(Arg::new("os")
+			.short('o')
+			.long("os")
+			.help("os type")
+			.takes_value(true))	
 		.arg(Arg::new("debug")
 			.short('d')
 			.help("print debug information verbosely"))
 	}
 
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-
 		if let Some(action) = param.value_of("action"){
 			return self.action_manager.execute_action(action, self, param);
 		};
@@ -52,26 +54,21 @@ pub fn new() -> Box<dyn Module> {
 
 fn action_download(module: &VMWareModule, param:&ArgMatches) -> std::io::Result<()> {
 	println!("download action in {}", module.name());
-	if cfg!(windows) {
-		println!("this is windows");
-	} else if cfg!(unix) {
-		println!("this is unix alike");
-	} else if cfg!(macos) {
-		println!("this is macos");
-	}
 
-	let	url_windows = "https://www.vmware.com/go/getworkstation-win";
-	let url_linux = "https://www.vmware.com/go/getworkstation-linux";
-	let url_mac = "https://www.vmware.com/go/getfusion!!!";
-	let url = url_mac;
-
+	let os = match param.value_of("os") {
+		Some(os) => os,
+		None => std::env::consts::OS,
+	};
+	let url = match os {
+		"windows" =>  "https://www.vmware.com/go/getworkstation-win",
+		"linux" =>  "https://www.vmware.com/go/getworkstation-linux",
+		"macos" => "https://www.vmware.com/go/getfusion",
+		_ => {
+			return Err(io::Error::new(io::ErrorKind::Other,"please specify correct os type"));
+		},
+	};
 	let target_url = utility::download::get_final_url(url)?;
-	 
 	println!("get target url: {}", target_url);
-
 	let target_folder = std::path::Path::new("/tmp");
-
-
-		//download_file(target_url.as_str(), path.as_path());
 	download_file(target_url.as_str(), target_folder, true)
 }
