@@ -1,5 +1,8 @@
 use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
+use utility::execute::*;
+use std::io;
+
 struct NpmModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -16,19 +19,16 @@ impl Module for NpmModule{
 		.arg(Arg::new("action")
 			.help("Sets the action to perform")
 			.required(true))
-		.arg(Arg::new("proxy")
-			.short('p')
-			.long("proxy")
-			.help("Sets a custom proxy")
-			.takes_value(true))			
-		.arg(Arg::new("debug")
-			.short('d')
-			.help("print debug information verbosely"))
+		.arg(Arg::new("mirror")
+			.short('m')
+			.long("mirror")
+			.help("Set mirror name")
+			.takes_value(true))		
 	}
 
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
 		if let Some(action) = param.value_of("action"){
-			self.action_manager.execute_action(action, self, param);
+			return self.action_manager.execute_action(action, self, param);
 		};
 		Ok(())
 	}
@@ -38,20 +38,44 @@ pub fn new() -> Box<dyn Module> {
 	let module = NpmModule{
 		action_manager: BasicActionManager{
 			actions:vec![
-				BasicAction{name:"test",  execute: action_test},
-				BasicAction{name:"setup", execute: action_setup},
+				BasicAction{name:"proxy", execute: action_setup_proxy},
 			]
 		}
 	};
 	Box::new(module)
 }
 
-fn action_test(module: &NpmModule, param:&ArgMatches) -> std::io::Result<()>{
-	println!("test action in {}", module.name());
-	Ok(())
-}
+fn action_setup_proxy(module: &NpmModule, param:&ArgMatches) -> std::io::Result<()>{
+	let mirros = ["origin","taobao"];
+	if let Some(mirror) = param.value_of("mirror"){
+		
+		let mut target = -1;
+		let mut index = 0;
+		for m in mirros.iter() {
+			if *m == mirror {
+				target = index;
+				break;
+			}
+			index += 1;
+		}
 
-fn action_setup(module: &NpmModule, param:&ArgMatches) -> std::io::Result<()>{
-	println!("setup action in {}", module.name());
+		if target < 0 {
+			return Err(io::Error::new(io::ErrorKind::Other,"invalid mirror"));
+		} else {
+			let url = match mirror {
+				"origin" => "https://registry.npmjs.org/",
+				"taobao" => "https://registry.npm.taobao.org",
+				_ => "https://registry.npmjs.org/",
+			};
+
+			let cmd = Cmd{cmd:"npm", params: vec!["config", "set", "registry", url]};
+			if let Ok(code) = execute_command(&cmd) {
+				if 0 == code {
+					
+				}
+			}
+			println!("set proxy to {} succeeded", mirror);
+		}
+	}
 	Ok(())
 }

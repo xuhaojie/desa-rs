@@ -2,8 +2,8 @@ use crate::{Module , BasicAction,BasicActionManager};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use std::io::{self, prelude::*,BufWriter};
-use utility::{execute, clean::*};
-use utility::execute::Cmd;
+use utility::{execute::*, clean::*};
+
 struct CargoModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -106,28 +106,22 @@ fn action_setup_proxy(module: &CargoModule, param:&ArgMatches) -> std::io::Resul
 				_ => "https://goproxy.cn,direct",
 			};
 
-			let mut cmd1 = Cmd{cmd:"go", params: vec!["env", "-w", "GO111MODULE=on"]};
+			let cmd1 = Cmd{cmd:"go", params: vec!["env", "-w", "GO111MODULE=on"]};
 			//let cmd = format!("git config --global user.name {}", user);
 
-			if let Ok(code) = execute::execute_command(&cmd1) {
+			if let Ok(code) = execute_command(&cmd1) {
 				if 0 == code {
 					println!("exec {} succeed", cmd1.to_string());
 				}
 			}
 			let proxy = format!("GOPROXY={}", url);
-			let mut cmd2 = Cmd{cmd:"go", params: vec!["env", "-w", &proxy]};
-			if let Ok(code) = execute::execute_command(&cmd2) {
+			let cmd2 = Cmd{cmd:"go", params: vec!["env", "-w", &proxy]};
+			if let Ok(code) = execute_command(&cmd2) {
 				if 0 == code {
 					println!("exec {} succeed", cmd2.to_string());
 				}
 			}
 		}
 	}
-
-
-
-
-	
-
 	Ok(())
 }
