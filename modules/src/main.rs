@@ -59,6 +59,7 @@ fn main() -> std::io::Result<()> {
 		docker::new(),
 		git::new(),
 		go::new(),
+		pip::new(),
 		nomachine::new(),		
 		npm::new(),
 		vmware::new(),

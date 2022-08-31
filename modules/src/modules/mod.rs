@@ -3,6 +3,7 @@ pub mod cargo;
 pub mod docker;
 pub mod git;
 pub mod go;
+pub mod pip;
 pub mod nomachine;
 pub mod npm;
 pub mod vscode;
