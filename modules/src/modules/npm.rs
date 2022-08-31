@@ -75,7 +75,10 @@ fn action_setup_proxy(module: &NpmModule, param:&ArgMatches) -> std::io::Result<
 				}
 			}
 			println!("set proxy to {} succeeded", mirror);
+			Ok(())
 		}
+	} else {
+		Err(io::Error::new(io::ErrorKind::Other, "miss param for mirror"))
 	}
-	Ok(())
+	
 }

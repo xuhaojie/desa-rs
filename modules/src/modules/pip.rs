@@ -113,11 +113,14 @@ fn action_setup_proxy(module: &PipModule, param:&ArgMatches) -> std::io::Result<
 			}
 			buffer.flush()?;
 			println!("set proxy to {} succeeded", mirror);
+			Ok(())
 		} else {
-			return Err(io::Error::new(io::ErrorKind::Other,"invalid mirror"));
-		};
+			Err(io::Error::new(io::ErrorKind::Other,"invalid mirror"))
+		}
 		
+	} else {
+		Err(io::Error::new(io::ErrorKind::Other, "miss param for mirror"))
 	}
 
-	Ok(())
+
 }

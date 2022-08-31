@@ -81,7 +81,6 @@ fn action_clean(module: &CargoModule, param:&ArgMatches)  -> std::io::Result<()>
 }
 
 fn action_setup_proxy(module: &CargoModule, param:&ArgMatches) -> std::io::Result<()>{
-	println!("setup proxy action in {}", module.name());
 	//$ go env -w GO111MODULE=on
 	//$ go env -w GOPROXY=https://goproxy.cn,direct
 	let mirros = ["goproxy.cn","goproxy.io"];
@@ -121,7 +120,9 @@ fn action_setup_proxy(module: &CargoModule, param:&ArgMatches) -> std::io::Resul
 					println!("exec {} succeed", cmd2.to_string());
 				}
 			}
+			Ok(())
 		}
+	} else {
+		Err(io::Error::new(io::ErrorKind::Other, "miss param for mirror"))
 	}
-	Ok(())
 }
