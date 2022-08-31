@@ -46,10 +46,12 @@ pub fn new() -> Box<dyn Module> {
 	Box::new(module)
 }
 
-fn action_test(module: &NpmModule, param:&ArgMatches){
+fn action_test(module: &NpmModule, param:&ArgMatches) -> std::io::Result<()>{
 	println!("test action in {}", module.name());
+	Ok(())
 }
 
-fn action_setup(module: &NpmModule, param:&ArgMatches){
+fn action_setup(module: &NpmModule, param:&ArgMatches) -> std::io::Result<()>{
 	println!("setup action in {}", module.name());
+	Ok(())
 }

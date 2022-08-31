@@ -27,22 +27,27 @@ pub trait Module {
 
 pub struct BasicAction<T> {
 	name: &'static str,
-	execute: fn(module: &T, param: &ArgMatches),
+	execute: fn(module: &T, param: &ArgMatches) -> std::io::Result<()>,
 }
 pub struct BasicActionManager<T> {
 	actions : Vec<BasicAction<T>>,
 }
 
 impl <T>BasicActionManager<T> {
-	fn execute_action(&self, name: &str,module : &T, param: &ArgMatches) {
+	fn execute_action(&self, name: &str,module : &T, param: &ArgMatches) -> std::io::Result<()> {
 		for action in &self.actions {
 			if action.name == name {
 				//cmd = module.register(cmd);
 				println!("{}",action.name);
-				(action.execute)(module,param);
-				break;
+				//return (action.execute)(module, param);
+				let result = (action.execute)(module, param);
+				// if let Err(e) =  result{
+				// 	println!("{}", e.to_string());
+				// }
+				return result;
 			}
 		}
+		Ok(())
 	}
 }
 /*
@@ -127,8 +132,11 @@ fn main() -> std::io::Result<()> {
 
 	for module in &modules {
 		if let Some(matches) = matches.subcommand_matches(module.name()) {
-			println!("{} execute!", module.name());
-			module.execute(matches);
+			println!("execute module {} !", module.name());
+			let result = module.execute(matches);
+			if let Err(e) =  result{
+				println!("{}", e.to_string());
+			}
 			break;
 		}
 	}

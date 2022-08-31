@@ -49,11 +49,12 @@ pub fn new() -> Box<dyn Module> {
 	})
 }
 
-fn action_test(module: &GitModule, param:&ArgMatches){
+fn action_test(module: &GitModule, param:&ArgMatches) -> std::io::Result<()>{
 	println!("test action in {}", module.name());
+	Ok(())
 }
 
-fn action_setup(module: &GitModule, param:&ArgMatches){
+fn action_setup(module: &GitModule, param:&ArgMatches) -> std::io::Result<()>{
 	println!("setup action in {}", module.name());
 	
 	let output = ExecuteCommand::new("ls").args(["-l","-a"]).output().ok().expect("Failed to execute.");
@@ -84,6 +85,7 @@ fn action_setup(module: &GitModule, param:&ArgMatches){
 		println!("status: {}", output.status);
 		io::stdout().write_all(&output.stdout).unwrap();
 		io::stderr().write_all(&output.stderr).unwrap();
-	}	
+	}
+	Ok(())
 	
 }

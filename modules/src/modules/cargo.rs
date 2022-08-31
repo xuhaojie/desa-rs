@@ -45,15 +45,17 @@ pub fn new() -> Box<dyn Module> {
 	})
 }
 
-fn action_test(module: &CargoModule, param:&ArgMatches){
+fn action_test(module: &CargoModule, param:&ArgMatches)  -> std::io::Result<()>{
 	println!("test action in {}", module.name());
+	Ok(())
 }
 
-fn action_setup(module: &CargoModule, param:&ArgMatches){
+fn action_setup(module: &CargoModule, param:&ArgMatches) -> std::io::Result<()>{
 	println!("setup action in {}", module.name());
 	if let Some(action) = param.value_of("proxy"){
 		let config = param.value_of("proxy").unwrap_or("default.conf");
 		println!("Value for proxy: {}", config);
 	
 	}
+	Ok(())
 }

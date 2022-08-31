@@ -3,6 +3,7 @@ use clap::{Arg, ArgMatches, Command};
 use utility::download::*;
 use std::path::Path;
 use std::fs::{File, self};
+use std::io;
 struct VMWareModule{
 	action_manager: BasicActionManager<Self>,
 }
@@ -30,8 +31,9 @@ impl Module for VMWareModule{
 	}
 
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
+
 		if let Some(action) = param.value_of("action"){
-			self.action_manager.execute_action(action, self, param);
+			return self.action_manager.execute_action(action, self, param);
 		};
 		Ok(())
 	}
@@ -48,7 +50,7 @@ pub fn new() -> Box<dyn Module> {
 	Box::new(module)
 }
 
-fn action_download(module: &VMWareModule, param:&ArgMatches){
+fn action_download(module: &VMWareModule, param:&ArgMatches) -> std::io::Result<()> {
 	println!("download action in {}", module.name());
 	if cfg!(windows) {
 		println!("this is windows");
@@ -63,33 +65,13 @@ fn action_download(module: &VMWareModule, param:&ArgMatches){
 	let url_mac = "https://www.vmware.com/go/getfusion!!!";
 	let url = url_mac;
 
-	match  utility::download::get_final_url(url) {
-		Ok(url) => {
-			println!("get target url: {}", url);
-			if let Ok(file_name) = file_name_from_url(&url) {
-				println!("get filename: {}", file_name);
-				let over_write = true;
-				let target_folder = std::path::Path::new("/tmp");
-				let target_file = Path::new("/tmp").join(file_name);
-				if target_file.exists(){
-					if over_write {
-						fs::remove_file(target_file.as_path());
-					} else {
-						println!("file exists");
-						return
-					}
-				}
-					//download_file(target_url.as_str(), path.as_path());
-				download_file(url.as_str(), target_folder);		
-		
-			} else {
-				println!("can't get file from url {}", url);
-				return
-			}
-		},
-		Err(e) => {
-			println!("{}", e.to_string())
-		},
-	}
-	return
+	let target_url = utility::download::get_final_url(url)?;
+	 
+	println!("get target url: {}", target_url);
+
+	let target_folder = std::path::Path::new("/tmp");
+
+
+		//download_file(target_url.as_str(), path.as_path());
+	download_file(target_url.as_str(), target_folder, true)
 }

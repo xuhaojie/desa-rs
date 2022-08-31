@@ -139,7 +139,19 @@ impl downloader::progress::Reporter for SimpleReporter {
 }
 
 
-pub fn download_file(url: &str, folder: &Path)  -> std::io::Result<()> {
+pub fn download_file(url: &str, folder: &Path, over_write: bool)  -> std::io::Result<()> {
+	let file_name = file_name_from_url(url)?;
+	println!("get filename: {}", file_name);
+	let over_write = true;
+	let target_file = folder.join(file_name);
+	if target_file.exists(){
+		if over_write {
+			std::fs::remove_file(target_file.as_path());
+		} else {
+			return Err(io::Error::new(io::ErrorKind::Other,"file exists"));
+		}
+	}
+
     let mut downloader = Downloader::builder()
         .download_folder(folder)
         .parallel_requests(1)
