@@ -32,7 +32,7 @@ impl Module for GitModule{
 
 	fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
 		if let Some(action) = param.value_of("action"){
-			self.action_manager.execute_action(action, self, param);
+			return self.action_manager.execute_action(action, self, param);
 		};
 		Ok(())
 	}

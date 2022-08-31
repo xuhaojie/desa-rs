@@ -65,6 +65,7 @@ fn main() -> std::io::Result<()> {
 		cargo::new(),
 		docker::new(),
 		git::new(),
+		nomachine::new(),		
 		npm::new(),
 		vmware::new(),
 		vscode::new(),
