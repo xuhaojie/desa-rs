@@ -55,7 +55,6 @@ fn action_setup(module: &DockerModule, param:&ArgMatches) -> std::io::Result<()>
 	if let Some(action) = param.value_of("proxy"){
 		let config = param.value_of("proxy").unwrap_or("default.conf");
 		println!("Value for proxy: {}", config);
-	
 	}
 	Ok(())
 }

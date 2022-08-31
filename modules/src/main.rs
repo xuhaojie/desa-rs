@@ -1,22 +1,7 @@
 pub mod modules;
-use std::io::{stderr,stdout,Write};
-use utility::download::*;
+use std::io;
 use crate::modules::*;
-//extern crate clap;
-
 use clap::{Arg, App, SubCommand, ArgMatches, Command};
-/*
-pub trait Action {
-	fn name(&self) -> &'static str;
-	fn execute(&self, param: &ArgMatches) -> std::io::Result<()>;
-}
-pub trait ActionManager {
-	fn add(name: String, action: dyn Action);
-	fn execute_action(&self, name: &str,param: &ArgMatches);
-}
-*/
-
-
 
 pub trait Module {
 	fn name(&self) -> &'static str;
@@ -40,17 +25,10 @@ impl <T>BasicActionManager<T> {
 				return (action.execute)(module, param);
 			}
 		}
-		Ok(())
+		return Err(io::Error::new(io::ErrorKind::Other,format!("invalid action '{}'", name)));
 	}
 }
-/*
-pub struct SubModule<'a> {
-	name : &'a str,
-	cmd: Command<'a>,
-	action_manager : BasicActionManager<Self>,
-	execute: fn(module: &SubModule, param: &ArgMatches),
-}
-*/
+
 fn main() -> std::io::Result<()> {
 
 	let modules: Vec<Box<dyn Module>> = vec![
