@@ -22,3 +22,5 @@ dirs = "4.0"
 reqwest = {version = "0.11.11", features = ["blocking"]}
 
 
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

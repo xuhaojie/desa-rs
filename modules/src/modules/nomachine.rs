@@ -25,11 +25,21 @@ impl Module for NomachineModule{
 			.long("os")
 			.help("os type")
 			.takes_value(true))
+		.arg(Arg::new("arch")
+			.short('a')
+			.long("arch")
+			.help("arch type")
+			.takes_value(true))			
 		.arg(Arg::new("package")
 			.short('k')
 			.long("package")
 			.help("package type")
-			.takes_value(true))					
+			.takes_value(true))
+		.arg(Arg::new("folder")
+			.short('f')
+			.long("folder")
+			.help("target folder")
+			.takes_value(true))						
 		.arg(Arg::new("proxy")
 			.short('p')
 			.long("proxy")
@@ -67,7 +77,16 @@ fn action_download(module: &NomachineModule, param:&ArgMatches) -> std::io::Resu
 		None => current_platform(),
 	};
 
-	let arch = current_arch();
+	let arch = match param.value_of("arch") {
+		Some(a) => Arch::from(a),
+		None => current_arch(),
+	};
+
+	let folder = match param.value_of("folder") {
+		Some(f) => f.to_string(),
+		None => std::env::current_dir().unwrap().to_str().unwrap().to_owned(),
+	};
+
 	let pkg = match param.value_of("package") {
 		Some(pkg_type) => PackageType::from(pkg_type),
 		None => {
@@ -145,6 +164,6 @@ fn action_download(module: &NomachineModule, param:&ArgMatches) -> std::io::Resu
 	let target_url = content[start + 1..start+end].to_string();
 	println!("target url: {}", target_url);
 
-	let target_folder = std::path::Path::new("/tmp");
+	let target_folder = std::path::Path::new(&folder);
 	download_file(&target_url, target_folder, true)
 }

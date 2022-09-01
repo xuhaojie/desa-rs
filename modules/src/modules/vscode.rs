@@ -58,11 +58,21 @@ impl Module for VScodeModule{
 			.long("os")
 			.help("os type")
 			.takes_value(true))
+		.arg(Arg::new("arch")
+			.short('a')
+			.long("arch")
+			.help("arch type")
+			.takes_value(true))				
 		.arg(Arg::new("package")
 			.short('k')
 			.long("package")
 			.help("package type")
-			.takes_value(true))						
+			.takes_value(true))
+		.arg(Arg::new("folder")
+			.short('f')
+			.long("folder")
+			.help("target folder")
+			.takes_value(true))										
 		.arg(Arg::new("debug")
 			.short('d')
 			.help("print debug information verbosely"))
@@ -178,7 +188,16 @@ fn action_download(module: &VScodeModule, param:&ArgMatches) -> std::io::Result<
 		None => current_platform(),
 	};
 
-	let arch = current_arch();
+	let arch = match param.value_of("arch") {
+		Some(a) => Arch::from(a),
+		None => current_arch(),
+	};
+
+	let folder = match param.value_of("folder") {
+		Some(f) => f.to_string(),
+		None => std::env::current_dir().unwrap().to_str().unwrap().to_owned(),
+	};
+
 	let pkg = match param.value_of("package") {
 		Some(pkg_type) => PackageType::from(pkg_type),
 		None => {
@@ -196,7 +215,7 @@ fn action_download(module: &VScodeModule, param:&ArgMatches) -> std::io::Result<
 
 	let  final_url = replace_vscode_download_url(&redirected_url, build, "https://vscode.cdn.azure.cn");
 	println!("final_url: {}", final_url);
-	let target_folder = std::path::Path::new("/tmp");
+	let target_folder = std::path::Path::new(&folder);
 	download_file(&final_url, target_folder, true)
 }
 
