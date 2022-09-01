@@ -58,7 +58,8 @@ fn action_clean(module: &CargoModule, param:&ArgMatches)  -> std::io::Result<()>
 
 	let path = match param.value_of("path"){
 		Some(p) => p.to_owned(),
-		None => return Err(io::Error::new(io::ErrorKind::Other,"please specify a path")),
+		//None => return Err(io::Error::new(io::ErrorKind::Other,"please specify a path")),
+		None => String::from(std::env::current_dir()?.as_path().to_str().unwrap()),
 	};
 
 	let mut projects = Vec::<String>::new();
