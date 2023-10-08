@@ -1,4 +1,4 @@
-use crate::{BasicAction, BasicActionManager, Module};
+use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use std::fmt;
 use std::io;
@@ -31,107 +31,72 @@ impl From<&str> for BuildType {
     }
 }
 
-struct VScodeModule {
-    action_manager: BasicActionManager<'a, Self>,
-}
-
-impl Module for VScodeModule {
-    fn name(&self) -> &'static str {
-        "vscode"
-    }
-
-    fn command(&self) -> Command<'static> {
-        Command::new(self.name())
-            .about("download vscode")
-            .arg(
-                Arg::new("action")
-                    .help("Sets the action to perform")
-                    .required(true),
-            )
-            .arg(
-                Arg::new("proxy")
-                    .short('p')
-                    .long("proxy")
-                    .help("Sets a custom proxy")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("os")
-                    .short('o')
-                    .long("os")
-                    .help("os type")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("arch")
-                    .short('a')
-                    .long("arch")
-                    .help("arch type")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("package")
-                    .short('k')
-                    .long("package")
-                    .help("package type")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("folder")
-                    .short('f')
-                    .long("folder")
-                    .help("target folder")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("debug")
-                    .short('d')
-                    .help("print debug information verbosely"),
-            )
-    }
-
-    fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-        if let Some(action) = param.value_of("action") {
-            return self.action_manager.execute_action(action, self, param);
-        };
-        Ok(())
-    }
-}
-
 pub fn new() -> Box<dyn Module> {
-    let module = VScodeModule {
-        action_manager: BasicActionManager {
-            actions: vec![
-                BasicAction {
-                    name: "download",
-                    cmd: || {
-                        Command::new("download")
-                            .about("controls testing features")
-                            .version("1.3")
-                            .author("Someone E. <someone_else@other.com>")
-                            .arg(
-                                Arg::with_name("debug")
-                                    .short('d')
-                                    .help("print debug information verbosely"),
-                            )
-                    },
-                    execute: action_download,
-                },
-                BasicAction {
-                    name: "setup",
-                    cmd: || {
-                        Command::new("setup").arg(
+    Box::new(BaseModule {
+        name: "vscode",
+        description: "Download vscode",
+        actions: vec![
+            BasicAction {
+                name: "download",
+                cmd: || {
+                    Command::new("download")
+                        .about("download vscode")
+                        .arg(
+                            Arg::new("proxy")
+                                .short('p')
+                                .long("proxy")
+                                .help("Sets a custom proxy")
+                                .takes_value(true),
+                        )
+                        .arg(
+                            Arg::new("os")
+                                .short('o')
+                                .long("os")
+                                .help("os type")
+                                .takes_value(true),
+                        )
+                        .arg(
+                            Arg::new("arch")
+                                .short('a')
+                                .long("arch")
+                                .help("arch type")
+                                .takes_value(true),
+                        )
+                        .arg(
+                            Arg::new("package")
+                                .short('k')
+                                .long("package")
+                                .help("package type")
+                                .takes_value(true),
+                        )
+                        .arg(
+                            Arg::new("folder")
+                                .short('f')
+                                .long("folder")
+                                .help("target folder")
+                                .takes_value(true),
+                        )
+                        .arg(
                             Arg::with_name("debug")
                                 .short('d')
                                 .help("print debug information verbosely"),
                         )
-                    },
-                    execute: action_setup,
                 },
-            ],
-        },
-    };
-    Box::new(module)
+                execute: action_download,
+            },
+            BasicAction {
+                name: "setup",
+                cmd: || {
+                    Command::new("setup").arg(
+                        Arg::with_name("debug")
+                            .short('d')
+                            .help("print debug information verbosely"),
+                    )
+                },
+                execute: action_setup,
+            },
+        ],
+    })
 }
 
 fn gen_download_url(
@@ -255,7 +220,7 @@ fn replace_vscode_download_url(url: &str, build: BuildType, newbase: &str) -> St
     }
 }
 
-fn action_download(module: &VScodeModule, param: &ArgMatches) -> std::io::Result<()> {
+fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let build = BuildType::STABLE;
 
     let platform = match param.value_of("os") {
@@ -303,8 +268,10 @@ fn action_download(module: &VScodeModule, param: &ArgMatches) -> std::io::Result
     download_file(&final_url, target_folder, true)
 }
 
-fn action_setup(module: &VScodeModule, param: &ArgMatches) -> std::io::Result<()> {
-    println!("setup action in {}", module.name());
+fn action_setup(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+    if let Some(parent) = parent {
+        println!("setup action in {}", parent.name());
+    }
     if let Some(action) = param.value_of("proxy") {
         let config = param.value_of("proxy").unwrap_or("default.conf");
         println!("Value for proxy: {}", config);

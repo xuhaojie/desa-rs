@@ -1,66 +1,34 @@
-use crate::{BasicAction, BasicActionManager, Module};
+use crate::{BasicAction, BaseModule, Module};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use reqwest::Url;
 use std::io::{self, prelude::*, BufWriter};
 use utility::{clean::*, platform::*};
-struct PipModule {
-    action_manager: BasicActionManager<Self>,
-}
-
-impl Module for PipModule {
-    fn name(&self) -> &'static str {
-        "pip"
-    }
-
-    fn command(&self) -> Command<'static> {
-        Command::new(self.name())
-            .about("setup pip")
-            .arg(
-                Arg::new("action")
-                    .help("Set the action to perform")
-                    .required(true),
-            )
-            .arg(
-                Arg::new("mirror")
-                    .short('m')
-                    .long("mirror")
-                    .help("Set mirror name")
-                    .takes_value(true),
-            )
-    }
-
-    fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-        if let Some(action) = param.value_of("action") {
-            return self.action_manager.execute_action(action, self, param);
-        };
-        Ok(())
-    }
-}
 
 pub fn new() -> Box<dyn Module> {
-    Box::new(PipModule {
-        action_manager: BasicActionManager {
-            actions: vec![BasicAction {
-                name: "proxy",
-                cmd: || {
-                    Command::new("download")
-                        .about("controls testing features")
-                        .version("1.3")
-                        .author("Someone E. <someone_else@other.com>")
-                        .arg(
-                            Arg::with_name("debug")
-                                .short('d')
-                                .help("print debug information verbosely"),
-                        )
-                },
-                execute: action_setup_proxy,
-            }],
-        },
-    })
+    Box::new(BaseModule {
+		name: "pip",
+		description:"Setup pip",
+		actions: vec![BasicAction {
+			name: "proxy",
+			cmd: || {
+				Command::new("download")
+					.about("controls testing features")
+					.arg(
+						Arg::new("mirror")
+							.short('m')
+							.long("mirror")
+							.help("Set mirror name")
+							.takes_value(true),
+					)
+			},
+			execute: action_setup_proxy,
+		}],
+	})
 }
 
-fn action_setup_proxy(module: &PipModule, param: &ArgMatches) -> std::io::Result<()> {
+
+fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let mut lines = vec![
         "[global]\n",
         "index-url=https://pypi.tuna.tsinghua.edu.cn/simple\n",

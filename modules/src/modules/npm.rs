@@ -1,66 +1,31 @@
-use crate::{BasicAction, BasicActionManager, Module};
+use crate::{BasicAction, BaseModule, Module};
 use clap::{Arg, ArgMatches, Command};
 use std::io;
 use utility::execute::*;
 
-struct NpmModule<'a> {
-    action_manager: BasicActionManager<'a, Self>,
-}
-
-impl<'a> Module for NpmModule<'a> {
-    fn name(&self) -> &'static str {
-        "npm"
-    }
-
-    fn command(&self) -> Command<'static> {
-        Command::new(self.name())
-            .about("setup npm")
-            .arg(
-                Arg::new("action")
-                    .help("Sets the action to perform")
-                    .required(true),
-            )
-            .arg(
-                Arg::new("mirror")
-                    .short('m')
-                    .long("mirror")
-                    .help("Set mirror name")
-                    .takes_value(true),
-            )
-    }
-
-    fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-        if let Some(action) = param.value_of("action") {
-            return self.action_manager.execute_action(action, self, param);
-        };
-        Ok(())
-    }
-}
-
 pub fn new() -> Box<dyn Module> {
-    let module = NpmModule {
-        action_manager: BasicActionManager {
-            actions: vec![BasicAction {
-                name: "proxy",
-                cmd: || {
-                    Command::new("proxy")
-                        .about("controls testing features")
-                        .version("1.3")
-                        .author("Someone E. <someone_else@other.com>")
-                        .arg(
-                            Arg::with_name("debug")
-                                .short('d')
-                                .help("print debug information verbosely"),
-                        )
-                },
-                execute: action_setup_proxy,
-            }],
-        },
-    };
-    Box::new(module)
+    Box::new(BaseModule {
+		name: "npm",
+		description:"Setup npm proxy",
+		actions: vec![
+			BasicAction {
+				name: "proxy",
+				cmd: || {
+					Command::new("proxy").about("clean cargo projects builds").arg(
+						Arg::new("mirror")
+							.short('m')
+							.long("mirror")
+							.help("mirror name, one of tuna, sjtu, ustc, rustcc")
+							.takes_value(true),
+					)
+				},
+				execute: action_setup_proxy,
+			},
+        ],
+    })
 }
 
-fn action_setup_proxy(module: &NpmModule, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let mirros = ["origin", "taobao"];
     if let Some(mirror) = param.value_of("mirror") {
         let mut target = -1;

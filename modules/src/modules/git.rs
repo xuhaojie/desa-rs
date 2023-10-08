@@ -1,71 +1,39 @@
-use crate::{BasicAction, BasicActionManager, Module};
+use crate::{BasicAction, BaseModule, Module};
 use clap::{Arg, ArgMatches, Command};
 use utility::execute::{self, Cmd};
 
-struct GitModule {
-    action_manager: BasicActionManager<Self>,
-}
-
-impl Module for GitModule {
-    fn name(&self) -> &'static str {
-        "git"
-    }
-
-    fn command(&self) -> clap::Command<'static> {
-        clap::Command::new(self.name())
-            .about("setup git")
-            .arg(
-                Arg::new("action")
-                    .help("Sets the action to perform")
-                    .required(true),
-            )
-            .arg(
-                Arg::new("user")
-                    .short('u')
-                    .long("user")
-                    .help("Sets user name")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("email")
-                    .short('e')
-                    .long("email")
-                    .help("Sets email address")
-                    .takes_value(true),
-            )
-    }
-
-    fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-        if let Some(action) = param.value_of("action") {
-            return self.action_manager.execute_action(action, self, param);
-        };
-        Ok(())
-    }
-}
-
 pub fn new() -> Box<dyn Module> {
-    Box::new(GitModule {
-        action_manager: BasicActionManager {
-            actions: vec![BasicAction {
-                name: "setup",
-                cmd: || {
-                    Command::new("download")
-                        .about("controls testing features")
-                        .version("1.3")
-                        .author("Someone E. <someone_else@other.com>")
-                        .arg(
-                            Arg::with_name("debug")
-                                .short('d')
-                                .help("print debug information verbosely"),
-                        )
-                },
-                execute: action_setup,
-            }],
-        },
+    Box::new(BaseModule {
+		name: "git",
+		description:"Setup git",
+		actions: vec![
+			BasicAction {
+				name: "setup",
+				cmd: || {
+					Command::new("setup").about("setup git")
+					.arg(
+						Arg::new("user")
+							.short('u')
+							.long("user")
+							.help("Sets user name")
+							.takes_value(true),
+					)
+					.arg(
+						Arg::new("email")
+							.short('e')
+							.long("email")
+							.help("Sets email address")
+							.takes_value(true),
+					)
+				},
+				execute: action_setup,
+			},
+        ],
     })
 }
 
-fn action_setup(module: &GitModule, param: &ArgMatches) -> std::io::Result<()> {
+
+fn action_setup(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     if let Some(user) = param.value_of("user") {
         let mut cmd = Cmd {
             cmd: "git",

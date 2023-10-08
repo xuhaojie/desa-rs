@@ -7,7 +7,7 @@ use utility::clean::*;
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
 		name: "cargo",
-		description:"",
+		description:"Setup mirror or clean cargo projects",
 		actions: vec![
 			BasicAction {
 				name: "clean",
@@ -29,7 +29,7 @@ pub fn new() -> Box<dyn Module> {
 						Arg::new("mirror")
 							.short('m')
 							.long("mirror")
-							.help("mirror name, one of tuna, sjtu, ustc, rustcc")
+							.help("mirror name, [tuna, sjtu, ustc, rustcc]")
 							.takes_value(true),
 					)
 				},

@@ -17,8 +17,8 @@ pub struct BasicAction {
 }
 
 struct BaseModule {
-	name: &'static str,
-	description:&'static str,
+    name: &'static str,
+    description: &'static str,
     actions: Vec<BasicAction>,
 }
 
@@ -35,7 +35,7 @@ impl Module for BaseModule {
         c
     }
 
-    fn execute(&self,parent: Option<Box<dyn Module>>, param: &ArgMatches) -> std::io::Result<()> {
+    fn execute(&self, parent: Option<Box<dyn Module>>, param: &ArgMatches) -> std::io::Result<()> {
         if let Some(action) = param.subcommand() {
             for act in &self.actions {
                 if act.name == action.0 {
@@ -52,19 +52,18 @@ impl Module for BaseModule {
     }
 }
 
-
 fn main() -> std::io::Result<()> {
     let modules: Vec<Box<dyn Module>> = vec![
-        //        apt::new(),
+        apt::new(),
         cargo::new(),
-        //        docker::new(),
-        //        git::new(),
-        //        go::new(),
-        // pip::new(),
-        // nomachine::new(),
-        // npm::new(),
-        // vmware::new(),
-        // vscode::new(),
+        docker::new(),
+        git::new(),
+        go::new(),
+        pip::new(),
+        nomachine::new(),
+        npm::new(),
+        vmware::new(),
+        vscode::new(),
     ];
 
     let mut cmd = Command::new("desa")
@@ -125,7 +124,7 @@ fn main() -> std::io::Result<()> {
     for module in &modules {
         if let Some(matches) = matches.subcommand_matches(module.name()) {
             //println!("execute module {}", module.name());
-            let result = module.execute(None,matches);
+            let result = module.execute(None, matches);
             if let Err(e) = result {
                 println!("{}", e.to_string());
             }

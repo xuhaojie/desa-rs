@@ -1,102 +1,63 @@
-use crate::{BasicAction, BasicActionManager, Module};
+use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use std::fmt;
 use std::{io, ops::Index};
 use utility::{arch::*, download::*, execute::*, package::*, platform::*};
 
-struct NomachineModule {
-    action_manager: BasicActionManager<Self>,
-}
-
-impl Module for NomachineModule {
-    fn name(&self) -> &'static str {
-        "nomachine"
-    }
-
-    fn command(&self) -> Command<'static> {
-        Command::new(self.name())
-            .about("setup nomachine")
-            .arg(
-                Arg::new("action")
-                    .help("Sets the action to perform")
-                    .required(true),
-            )
-            .arg(
-                Arg::new("os")
-                    .short('o')
-                    .long("os")
-                    .help("os type")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("arch")
-                    .short('a')
-                    .long("arch")
-                    .help("arch type")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("package")
-                    .short('k')
-                    .long("package")
-                    .help("package type")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("folder")
-                    .short('f')
-                    .long("folder")
-                    .help("target folder")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("proxy")
-                    .short('p')
-                    .long("proxy")
-                    .help("Sets a custom proxy")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("debug")
-                    .short('d')
-                    .help("print debug information verbosely"),
-            )
-    }
-
-    fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-        if let Some(action) = param.value_of("action") {
-            self.action_manager.execute_action(action, self, param);
-        };
-        Ok(())
-    }
-}
-
 pub fn new() -> Box<dyn Module> {
-    let module = NomachineModule {
-        action_manager: BasicActionManager {
-            actions: vec![BasicAction {
-                name: "download",
-                cmd: || {
-                    Command::new("download")
-                        .about("controls testing features")
-                        .version("1.3")
-                        .author("Someone E. <someone_else@other.com>")
-                        .arg(
-                            Arg::with_name("debug")
-                                .short('d')
-                                .help("print debug information verbosely"),
-                        )
-                },
-                execute: action_download,
-            }],
-        },
-    };
-    Box::new(module)
+    Box::new(BaseModule {
+        name: "nomachine",
+        description: "Download nomachine",
+        actions: vec![BasicAction {
+            name: "download",
+            cmd: || {
+                Command::new("download")
+                    .about("download nomachine")
+                    .arg(
+                        Arg::new("os")
+                            .short('o')
+                            .long("os")
+                            .help("os type")
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("arch")
+                            .short('a')
+                            .long("arch")
+                            .help("arch type")
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("package")
+                            .short('k')
+                            .long("package")
+                            .help("package type")
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("folder")
+                            .short('f')
+                            .long("folder")
+                            .help("target folder")
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("proxy")
+                            .short('p')
+                            .long("proxy")
+                            .help("Sets a custom proxy")
+                            .takes_value(true),
+                    )
+            },
+            execute: action_download,
+        }],
+    })
 }
 
-fn action_download(module: &NomachineModule, param: &ArgMatches) -> std::io::Result<()> {
-    println!("download action in {}", module.name());
-
+fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+    if let Some(parent) = parent {
+        println!("download action in {}", parent.name());
+    }
     let platform = match param.value_of("os") {
         Some(os) => Platform::from(os),
         None => current_platform(),

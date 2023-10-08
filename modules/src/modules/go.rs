@@ -1,95 +1,50 @@
-use crate::{BasicAction, BasicActionManager, Module};
+use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use std::io::{self, prelude::*, BufWriter};
 use utility::{clean::*, execute::*};
-
-struct CargoModule {
-    action_manager: BasicActionManager<Self>,
-}
-
-impl Module for CargoModule {
-    fn name(&self) -> &'static str {
-        "go"
-    }
-
-    fn command(&self) -> Command<'static> {
-        Command::new(self.name())
-            .about("setup go")
-            .arg(
-                Arg::new("action")
-                    .help("Set the action to perform")
-                    .required(true),
-            )
-            .arg(
-                Arg::new("mirror")
-                    .short('m')
-                    .long("mirror")
-                    .help("Set mirror name")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("path")
-                    .short('p')
-                    .long("path")
-                    .help("Set start path")
-                    .takes_value(true),
-            )
-            .arg(
-                Arg::new("debug")
-                    .short('d')
-                    .help("print debug information verbosely"),
-            )
-    }
-
-    fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-        if let Some(action) = param.value_of("action") {
-            return self.action_manager.execute_action(action, self, param);
-        };
-        Ok(())
-    }
-}
-
 pub fn new() -> Box<dyn Module> {
-    Box::new(CargoModule {
-        action_manager: BasicActionManager {
-            actions: vec![
-                BasicAction {
-                    name: "clean",
-                    cmd: || {
-                        Command::new("download")
-                            .about("controls testing features")
-                            .version("1.3")
-                            .author("Someone E. <someone_else@other.com>")
-                            .arg(
-                                Arg::with_name("debug")
-                                    .short('d')
-                                    .help("print debug information verbosely"),
-                            )
-                    },
-                    execute: action_clean,
+    Box::new(BaseModule {
+        name: "go",
+        description: "Setup go proxy or clean go projects",
+        actions: vec![
+            BasicAction {
+                name: "clean",
+                cmd: || {
+                    Command::new("clean")
+                        .about("clean go project builds recursively")
+                        .arg(
+                            Arg::new("path")
+                                .short('p')
+                                .long("path")
+                                .help("Set start path")
+                                .takes_value(true),
+                        )						
                 },
-                BasicAction {
-                    name: "proxy",
-                    cmd: || {
-                        Command::new("download")
-                            .about("controls testing features")
-                            .version("1.3")
-                            .author("Someone E. <someone_else@other.com>")
-                            .arg(
-                                Arg::with_name("debug")
-                                    .short('d')
-                                    .help("print debug information verbosely"),
-                            )
-                    },
-                    execute: action_setup_proxy,
+                execute: action_clean,
+            },
+            BasicAction {
+                name: "proxy",
+                cmd: || {
+                    Command::new("proxy")
+                        .about("clean cargo projects builds")
+                        .arg(
+                            Arg::new("mirror")
+                                .short('m')
+                                .long("mirror")
+                                .help("mirror name, [goproxy.cn, goproxy.io]")
+                                .takes_value(true),
+                        )
+
                 },
-            ],
-        },
+                execute: action_setup_proxy,
+            },
+        ],
     })
 }
 
-fn action_clean(module: &CargoModule, param: &ArgMatches) -> std::io::Result<()> {
+
+fn action_clean(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let path = match param.value_of("path") {
         Some(p) => p.to_owned(),
         None => String::from(std::env::current_dir()?.as_path().to_str().unwrap()),
@@ -114,7 +69,7 @@ fn action_clean(module: &CargoModule, param: &ArgMatches) -> std::io::Result<()>
     Ok(())
 }
 
-fn action_setup_proxy(module: &CargoModule, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     //$ go env -w GO111MODULE=on
     //$ go env -w GOPROXY=https://goproxy.cn,direct
     let mirros = ["goproxy.cn", "goproxy.io"];
