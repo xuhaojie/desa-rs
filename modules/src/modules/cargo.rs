@@ -5,25 +5,56 @@ use std::io::{self, prelude::*, BufWriter};
 use utility::clean::*;
 
 struct CargoModule {
-    //    action_manager: BasicActionManager<Self>,
     actions: Vec<BasicAction<CargoModule>>,
 }
 
+fn register_actions<T>(sub_command: &str, actions: &Vec<BasicAction<T>>) -> Command<'static> {
+    let mut cmd = Command::new(sub_command).about("setup cargo");
+    for action in actions {
+        cmd = cmd.subcommand((action.cmd)());
+    }
+    cmd
+}
+
+fn execute_action<T>(
+    module: &T,
+    actions: &Vec<BasicAction<T>>,
+    param: &ArgMatches,
+) -> std::io::Result<()> {
+    if let Some(action) = param.subcommand() {
+        for act in actions {
+            if act.name == action.0 {
+                if let Some(param) = param.subcommand_matches(act.name) {
+                    return (act.execute)(module, param);
+                }
+            }
+        }
+    };
+    return Err(io::Error::new(
+        io::ErrorKind::Other,
+        format!("require sub command for '{}'", "cargo"),
+    ));
+}
 impl Module for CargoModule {
     fn name(&self) -> &'static str {
         "cargo"
     }
 
     fn command(&self) -> Command<'static> {
+        register_actions("cargo", &self.actions)
+        /*
         let cmd = Command::new(self.name()).about("setup cargo");
         let mut c: Command = cmd;
         for action in &self.actions {
             c = c.subcommand((action.cmd)());
         }
         c
+        */
     }
 
     fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
+        execute_action(self, &self.actions, param)
+        /*/
         if let Some(action) = param.subcommand() {
             //println!("{}", action.0);
             //return self.action_manager.execute_action(action, self, param);
@@ -38,8 +69,9 @@ impl Module for CargoModule {
         };
         return Err(io::Error::new(
             io::ErrorKind::Other,
-            format!("need sub command for '{}'", self.name()),
+            format!("require sub command for '{}'", self.name()),
         ));
+        */
     }
 }
 
@@ -54,7 +86,7 @@ pub fn new() -> Box<dyn Module> {
                         Arg::new("path")
                             .short('p')
                             .long("path")
-                            .help("Set start path")
+                            .help("set start path for clean")
                             .takes_value(true),
                     )
                 },

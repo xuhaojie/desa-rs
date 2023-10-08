@@ -10,6 +10,13 @@ pub trait Module {
     fn execute(&self, param: &ArgMatches) -> std::io::Result<()>;
 }
 
+pub trait Action {
+    fn name(&self) -> &'static str;
+    fn command(&self) -> Command<'static>;
+    //fn register<'a>(&self, app : App<'a>) -> App<'a>;
+    fn execute(&self, param: &ArgMatches) -> std::io::Result<()>;
+}
+
 pub struct BasicAction<T> {
     name: &'static str,
     cmd: fn() -> Command<'static>,

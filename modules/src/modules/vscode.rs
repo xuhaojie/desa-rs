@@ -32,7 +32,7 @@ impl From<&str> for BuildType {
 }
 
 struct VScodeModule {
-    action_manager: BasicActionManager<Self>,
+    action_manager: BasicActionManager<'a, Self>,
 }
 
 impl Module for VScodeModule {

@@ -3,11 +3,11 @@ use clap::{Arg, ArgMatches, Command};
 use std::io;
 use utility::execute::*;
 
-struct NpmModule {
-    action_manager: BasicActionManager<Self>,
+struct NpmModule<'a> {
+    action_manager: BasicActionManager<'a, Self>,
 }
 
-impl Module for NpmModule {
+impl<'a> Module for NpmModule<'a> {
     fn name(&self) -> &'static str {
         "npm"
     }
