@@ -38,7 +38,7 @@ impl Module for CargoModule {
         };
         return Err(io::Error::new(
             io::ErrorKind::Other,
-            format!("invalid action '{}'", self.name()),
+            format!("need sub command for '{}'", self.name()),
         ));
     }
 }
