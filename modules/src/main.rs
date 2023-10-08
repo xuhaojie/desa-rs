@@ -7,47 +7,51 @@ pub trait Module {
     fn name(&self) -> &'static str;
     fn command(&self) -> Command<'static>;
     //fn register<'a>(&self, app : App<'a>) -> App<'a>;
-    fn execute(&self, param: &ArgMatches) -> std::io::Result<()>;
+    fn execute(&self, parent: Option<Box<dyn Module>>, param: &ArgMatches) -> std::io::Result<()>;
 }
 
-pub trait Action {
-    fn name(&self) -> &'static str;
-    fn command(&self) -> Command<'static>;
-    //fn register<'a>(&self, app : App<'a>) -> App<'a>;
-    fn execute(&self, param: &ArgMatches) -> std::io::Result<()>;
-}
-
-pub struct BasicAction<T> {
+pub struct BasicAction {
     name: &'static str,
     cmd: fn() -> Command<'static>,
-    execute: fn(module: &T, param: &ArgMatches) -> std::io::Result<()>,
-}
-pub struct BasicActionManager<T> {
-    actions: Vec<BasicAction<T>>,
+    execute: fn(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()>,
 }
 
-impl<T> BasicActionManager<T> {
-    fn execute_action(&self, name: &str, module: &T, param: &ArgMatches) -> std::io::Result<()> {
+struct BaseModule {
+	name: &'static str,
+	description:&'static str,
+    actions: Vec<BasicAction>,
+}
+
+impl Module for BaseModule {
+    fn name(&self) -> &'static str {
+        &self.name
+    }
+    fn command(&self) -> Command<'static> {
+        let cmd = Command::new(self.name()).about(self.description);
+        let mut c: Command = cmd;
         for action in &self.actions {
-            if action.name == name {
-                return (action.execute)(module, param);
-            }
+            c = c.subcommand((action.cmd)());
         }
+        c
+    }
+
+    fn execute(&self,parent: Option<Box<dyn Module>>, param: &ArgMatches) -> std::io::Result<()> {
+        if let Some(action) = param.subcommand() {
+            for act in &self.actions {
+                if act.name == action.0 {
+                    if let Some(param) = param.subcommand_matches(act.name) {
+                        return (act.execute)(Some(self as &dyn Module), param);
+                    }
+                }
+            }
+        };
         return Err(io::Error::new(
             io::ErrorKind::Other,
-            format!("invalid action '{}'", name),
+            format!("require sub command for '{}'", self.name()),
         ));
     }
-    /*
-       fn register_cmd(&self, mut cmd: Command) -> Command {
-           let mut c: Command = cmd;
-           for action in &self.actions {
-               c = c.subcommand((action.cmd)());
-           }
-           c
-       }
-    */
 }
+
 
 fn main() -> std::io::Result<()> {
     let modules: Vec<Box<dyn Module>> = vec![
@@ -66,7 +70,7 @@ fn main() -> std::io::Result<()> {
     let mut cmd = Command::new("desa")
         .version("1.0")
         .author("Xu Haojie <xuhaojie@hotmail.com>")
-        .about("Does awesome things")
+        .about("Development enveriment setup assist")
         .arg(
             Arg::with_name("config")
                 .short('c')
@@ -85,17 +89,6 @@ fn main() -> std::io::Result<()> {
             Arg::with_name("ver")
                 .short('v')
                 .help("Sets the level of verbosity"),
-        )
-        .subcommand(
-            SubCommand::with_name("test")
-                .about("controls testing features")
-                .version("1.3")
-                .author("Someone E. <someone_else@other.com>")
-                .arg(
-                    Arg::with_name("debug")
-                        .short('d')
-                        .help("print debug information verbosely"),
-                ),
         );
 
     for module in &modules {
@@ -132,7 +125,7 @@ fn main() -> std::io::Result<()> {
     for module in &modules {
         if let Some(matches) = matches.subcommand_matches(module.name()) {
             //println!("execute module {}", module.name());
-            let result = module.execute(matches);
+            let result = module.execute(None,matches);
             if let Err(e) = result {
                 println!("{}", e.to_string());
             }

@@ -1,117 +1,45 @@
-use crate::{BasicAction, BasicActionManager, Module};
-use clap::{Arg, ArgMatches, Command, SubCommand};
+use crate::{BaseModule,BasicAction,  Module};
+use clap::{Arg, ArgMatches, Command};
 use dirs;
 use std::io::{self, prelude::*, BufWriter};
 use utility::clean::*;
 
-struct CargoModule {
-    actions: Vec<BasicAction<CargoModule>>,
-}
-
-fn register_actions<T>(sub_command: &str, actions: &Vec<BasicAction<T>>) -> Command<'static> {
-    let mut cmd = Command::new(sub_command).about("setup cargo");
-    for action in actions {
-        cmd = cmd.subcommand((action.cmd)());
-    }
-    cmd
-}
-
-fn execute_action<T>(
-    module: &T,
-    actions: &Vec<BasicAction<T>>,
-    param: &ArgMatches,
-) -> std::io::Result<()> {
-    if let Some(action) = param.subcommand() {
-        for act in actions {
-            if act.name == action.0 {
-                if let Some(param) = param.subcommand_matches(act.name) {
-                    return (act.execute)(module, param);
-                }
-            }
-        }
-    };
-    return Err(io::Error::new(
-        io::ErrorKind::Other,
-        format!("require sub command for '{}'", "cargo"),
-    ));
-}
-impl Module for CargoModule {
-    fn name(&self) -> &'static str {
-        "cargo"
-    }
-
-    fn command(&self) -> Command<'static> {
-        register_actions("cargo", &self.actions)
-        /*
-        let cmd = Command::new(self.name()).about("setup cargo");
-        let mut c: Command = cmd;
-        for action in &self.actions {
-            c = c.subcommand((action.cmd)());
-        }
-        c
-        */
-    }
-
-    fn execute(&self, param: &ArgMatches) -> std::io::Result<()> {
-        execute_action(self, &self.actions, param)
-        /*/
-        if let Some(action) = param.subcommand() {
-            //println!("{}", action.0);
-            //return self.action_manager.execute_action(action, self, param);
-
-            for act in &self.actions {
-                if act.name == action.0 {
-                    if let Some(param) = param.subcommand_matches(act.name) {
-                        return (act.execute)(self, param);
-                    }
-                }
-            }
-        };
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!("require sub command for '{}'", self.name()),
-        ));
-        */
-    }
-}
-
 pub fn new() -> Box<dyn Module> {
-    Box::new(CargoModule {
-        //    action_manager: BasicActionManager {
-        actions: vec![
-            BasicAction {
-                name: "clean",
-                cmd: || {
-                    Command::new("clean").arg(
-                        Arg::new("path")
-                            .short('p')
-                            .long("path")
-                            .help("set start path for clean")
-                            .takes_value(true),
-                    )
-                },
-
-                execute: action_clean,
-            },
-            BasicAction {
-                name: "proxy",
-                cmd: || {
-                    Command::new("proxy").arg(
-                        Arg::new("mirror")
-                            .short('m')
-                            .long("mirror")
-                            .help("mirror name, one of tuna, sjtu, ustc, rustcc")
-                            .takes_value(true),
-                    )
-                },
-                execute: action_setup_proxy,
-            },
+    Box::new(BaseModule {
+		name: "cargo",
+		description:"",
+		actions: vec![
+			BasicAction {
+				name: "clean",
+				cmd: || {
+					Command::new("clean").about("clean cargo project builds recursively").arg(
+						Arg::new("path")
+							.short('p')
+							.long("path")
+							.help("set start path for clean")
+							.takes_value(true),
+					)
+				},
+				execute: action_clean,
+			},
+			BasicAction {
+				name: "proxy",
+				cmd: || {
+					Command::new("proxy").about("clean cargo projects builds").arg(
+						Arg::new("mirror")
+							.short('m')
+							.long("mirror")
+							.help("mirror name, one of tuna, sjtu, ustc, rustcc")
+							.takes_value(true),
+					)
+				},
+				execute: action_setup_proxy,
+			},
         ],
-        //},
     })
 }
 
-fn action_clean(module: &CargoModule, param: &ArgMatches) -> std::io::Result<()> {
+fn action_clean(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let path = match param.value_of("path") {
         Some(p) => p.to_owned(),
         //None => return Err(io::Error::new(io::ErrorKind::Other,"please specify a path")),
@@ -124,7 +52,7 @@ fn action_clean(module: &CargoModule, param: &ArgMatches) -> std::io::Result<()>
     return clean_projects(&projects, "cargo", &["clean"]);
 }
 
-fn action_setup_proxy(module: &CargoModule, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let mut lines = vec![
         "[source.crates-io]\n",
         "registry =\"https://github.com/rust-lang/crates.io-index\"\n",
@@ -144,7 +72,7 @@ fn action_setup_proxy(module: &CargoModule, param: &ArgMatches) -> std::io::Resu
         "registry = \"https://code.aliyun.com/rustcc/crates.io-index.git\"\n\n",
     ];
 
-    //# 如：
+
     let mirros = ["tuna", "sjtu", "ustc", "rustcc"];
 
     if let Some(mirror) = param.value_of("mirror") {
