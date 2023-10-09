@@ -23,10 +23,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
-    if let Some(parent) = parent {
-        println!("download action in {}", parent.name());
-    }
+fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let os = match param.value_of("os") {
         Some(os) => Platform::from(os),
         None => current_platform(),
@@ -44,7 +41,7 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::
         }
     };
     let target_url = utility::download::get_redirected_url(url)?;
-    println!("get target url: {}", target_url);
+    println!("target url: {}", target_url);
     let target_folder = std::path::Path::new("./");
-    download_file(target_url.as_str(), target_folder, true)
+    download_file_to_folder(target_url.as_str(), target_folder, true)
 }

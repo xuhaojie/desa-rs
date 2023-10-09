@@ -2,7 +2,7 @@ use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use std::fmt;
 use std::io;
-use utility::{arch::*, download::*, execute::*, package::*, platform::*};
+use utility::{arch::*, download::*, package::PackageType, platform::*};
 
 pub enum BuildType {
     STABLE,
@@ -207,7 +207,7 @@ fn replace_vscode_download_url(url: &str, build: BuildType, newbase: &str) -> St
     }
 }
 
-fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let build = BuildType::STABLE;
 
     let platform = match param.value_of("os") {
@@ -252,5 +252,5 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::
         replace_vscode_download_url(&redirected_url, build, "https://vscode.cdn.azure.cn");
     println!("final_url: {}", final_url);
     let target_folder = std::path::Path::new(&folder);
-    download_file(&final_url, target_folder, true)
+    download_file_to_folder(&final_url, target_folder, true)
 }

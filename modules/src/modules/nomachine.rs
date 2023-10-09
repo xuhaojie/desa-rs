@@ -1,8 +1,7 @@
 use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
-use std::fmt;
-use std::{io, ops::Index};
-use utility::{arch::*, download::*, execute::*, package::*, platform::*};
+use std::io;
+use utility::{arch::*, download::*, package::*, platform::*};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -177,5 +176,5 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::
     println!("target url: {}", target_url);
 
     let target_folder = std::path::Path::new(&folder);
-    download_file(&target_url, target_folder, true)
+    download_file_to_folder(&target_url, target_folder, true)
 }

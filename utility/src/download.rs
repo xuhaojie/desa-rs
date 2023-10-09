@@ -1,6 +1,5 @@
 use bytes::{Buf, Bytes};
-//use downloader::Downloader;
-use std::io::{self, BufWriter, Write};
+use std::io::{self};
 use std::path::Path;
 
 pub fn get_redirected_url(url: &str) -> std::io::Result<String> {
@@ -54,16 +53,14 @@ pub fn download(url: &str) -> Result<Bytes, Box<dyn std::error::Error>> {
 }
 use std::fs::File;
 use std::io::copy;
-use tempfile::Builder;
 
-pub fn download_file(url: &str, folder: &Path, over_write: bool) -> std::io::Result<()> {
+pub fn download_file_to_folder(url: &str, folder: &Path, over_write: bool) -> std::io::Result<()> {
     let file_name = file_name_from_url(url)?;
     println!("filename to get: {}", file_name);
-    let over_write = true;
     let target_file = folder.join(file_name);
     if target_file.exists() {
         if over_write {
-            std::fs::remove_file(target_file.as_path());
+            let _ = std::fs::remove_file(target_file.as_path());
         } else {
             return Err(io::Error::new(io::ErrorKind::Other, "file exists"));
         }
@@ -101,7 +98,7 @@ pub fn download_file(url: &str, folder: &Path, over_write: bool) -> std::io::Res
             Ok(())
         }
         Err(e) => {
-            println!("Error reading");
+            println!("Error reading {}", e.to_string());
             return Err(io::Error::new(io::ErrorKind::Other, "request failed {}"));
         }
     }
@@ -161,48 +158,3 @@ impl downloader::progress::Reporter for SimpleReporter {
     }
 }
 */
-
-pub fn download_file_depend_openssl(
-    url: &str,
-    folder: &Path,
-    over_write: bool,
-) -> std::io::Result<()> {
-    /*
-        let file_name = file_name_from_url(url)?;
-        println!("get filename: {}", file_name);
-        let over_write = true;
-        let target_file = folder.join(file_name);
-        if target_file.exists() {
-            if over_write {
-                std::fs::remove_file(target_file.as_path());
-            } else {
-                return Err(io::Error::new(io::ErrorKind::Other, "file exists"));
-            }
-        }
-
-        let mut downloader = Downloader::builder()
-            .download_folder(folder)
-            .parallel_requests(1)
-            .build()
-            .unwrap();
-
-        let dl = downloader::Download::new(url);
-        let dl = dl.progress(SimpleReporter::create());
-
-        let result = downloader.download(&[dl]).unwrap();
-
-        for r in result {
-            match r {
-                Err(e) => {
-                    println!("Error: {}", e.to_string());
-                    return Err(io::Error::new(io::ErrorKind::Other, "failed download file"));
-                }
-                Ok(s) => {
-                    //				println!("Success: {}", &s);
-                    return Ok(());
-                }
-            };
-        }
-    */
-    Ok(())
-}

@@ -5,8 +5,7 @@ pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "apt",
         description: "Setup apt mirror",
-        actions: vec![
-			BasicAction {
+        actions: vec![BasicAction {
             name: "mirror",
             cmd: || {
                 Command::new("mirror").about("setup apt mirror").arg(
@@ -22,10 +21,9 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_setup(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
-    if let Some(parent) = parent {
+fn action_setup(_parent: Option<&dyn Module>, _param: &ArgMatches) -> std::io::Result<()> {
+    if let Some(parent) = _parent {
         println!("setup action in {}", parent.name());
     }
-
     Ok(())
 }
