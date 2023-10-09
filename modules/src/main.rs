@@ -1,18 +1,18 @@
 pub mod modules;
 use crate::modules::*;
 use clap::{ArgMatches, Command};
-use std::io;
+use anyhow::anyhow;
 
 pub trait Module {
     fn name(&self) -> &'static str;
     fn command(&self) -> Command<'static>;
-    fn execute(&self, parent: Option<Box<dyn Module>>, param: &ArgMatches) -> std::io::Result<()>;
+    fn execute(&self, parent: Option<Box<dyn Module>>, param: &ArgMatches) -> Result<(), anyhow::Error> ;
 }
 
 pub struct BasicAction {
     name: &'static str,
     cmd: fn() -> Command<'static>,
-    execute: fn(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()>,
+    execute: fn(parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error>,
 }
 
 struct BaseModule {
@@ -33,7 +33,7 @@ impl Module for BaseModule {
         cmd
     }
 
-    fn execute(&self, _parent: Option<Box<dyn Module>>, param: &ArgMatches) -> std::io::Result<()> {
+    fn execute(&self, _parent: Option<Box<dyn Module>>, param: &ArgMatches) -> Result<(), anyhow::Error>  {
         if let Some(action) = param.subcommand() {
             for act in &self.actions {
                 if act.name == action.0 {
@@ -45,14 +45,17 @@ impl Module for BaseModule {
         };
 
         let _ = self.command().print_help();
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!("Please specify sub command for '{}.'", self.name()),
-        ));
+        return Err(anyhow!("Please specify sub command for '{}.'", self.name()));
     }
 }
 
-fn main() -> std::io::Result<()> {
+
+
+
+//#[tokio::main]
+fn main() {
+	//utility::download::download_package("https://www.vmware.com/go/getfusion").await;
+	//return;
     let modules: Vec<Box<dyn Module>> = vec![
         apt::new(),
         cargo::new(),
@@ -93,7 +96,7 @@ fn main() -> std::io::Result<()> {
     if !found {
         let _ = cmd.print_help();
     }
-    Ok(())
+
 }
 
 // desa git setup -e xuhaojie@hotmail.com -u xuhaojie

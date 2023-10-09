@@ -2,7 +2,7 @@ use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use std::io;
 use utility::execute::*;
-
+use anyhow::anyhow;
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "npm",
@@ -25,7 +25,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     let mirros = ["origin", "taobao"];
     if let Some(mirror) = param.value_of("mirror") {
         let mut target = -1;
@@ -39,7 +39,7 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
         }
 
         if target < 0 {
-            return Err(io::Error::new(io::ErrorKind::Other, "invalid mirror"));
+            return Err(anyhow!("invalid mirror"));
         } else {
             let url = match mirror {
                 "origin" => "https://registry.npmjs.org/",
@@ -58,9 +58,6 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
             Ok(())
         }
     } else {
-        Err(io::Error::new(
-            io::ErrorKind::Other,
-            "miss param for mirror",
-        ))
+        Err(anyhow!("miss param for mirror"))
     }
 }

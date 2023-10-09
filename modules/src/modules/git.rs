@@ -31,7 +31,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_setup(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     if let Some(user) = param.value_of("user") {
         let mut cmd = Cmd {
             cmd: "git",

@@ -3,6 +3,7 @@ use clap::{Arg, ArgMatches, Command};
 use dirs;
 use std::io::{self, prelude::*, BufWriter};
 use utility::{clean::*, file::write_lines_to_file};
+use anyhow::anyhow;
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -50,7 +51,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     let path = match param.value_of("path") {
         Some(p) => p.to_owned(),
         //None => return Err(io::Error::new(io::ErrorKind::Other,"please specify a path")),
@@ -130,7 +131,7 @@ fn gen_config(index: usize) -> Vec<String> {
     result
 }
 
-fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
  
     if param.get_flag("list") {
 		list_registers();
@@ -156,7 +157,7 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
 
             let home_dir = match dirs::home_dir() {
                 Some(path) => path,
-                None => return Err(io::Error::new(io::ErrorKind::Other, "can't get home dir")),
+                None => return Err(anyhow!("can't get home dir")),
             };
 
             let target_path = home_dir.join(".cargo");
@@ -164,13 +165,10 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
             println!("set proxy to {} succeeded", mirror);
             Ok(())
         } else {
-            Err(io::Error::new(io::ErrorKind::Other, "invalid mirror"))
+            Err(anyhow!("invalid mirror"))
         }
     } else {
 		list_registers();
-        Err(io::Error::new(
-            io::ErrorKind::Other,
-            "Please specify a registery by name, for example tuna",
-        ))
+        Err(anyhow!("Please specify a registery by name, for example tuna"))
     }
 }

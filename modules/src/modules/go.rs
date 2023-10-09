@@ -1,6 +1,6 @@
 use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
-
+use anyhow::anyhow;
 use std::io::{self};
 use utility::{clean::*, execute::*};
 pub fn new() -> Box<dyn Module> {
@@ -42,7 +42,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     let path = match param.value_of("path") {
         Some(p) => p.to_owned(),
         None => String::from(std::env::current_dir()?.as_path().to_str().unwrap()),
@@ -67,7 +67,7 @@ fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Re
     Ok(())
 }
 
-fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     //$ go env -w GO111MODULE=on
     //$ go env -w GOPROXY=https://goproxy.cn,direct
     let mirros = ["goproxy.cn", "goproxy.io"];
@@ -83,7 +83,7 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
         }
 
         if target < 0 {
-            return Err(io::Error::new(io::ErrorKind::Other, "invalid mirror"));
+            return Err(anyhow!("invalid mirror"));
         } else {
             let url = match mirror {
                 "goproxy.cn" => "https://goproxy.cn,direct",
@@ -114,9 +114,6 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
             Ok(())
         }
     } else {
-        Err(io::Error::new(
-            io::ErrorKind::Other,
-            "miss param for mirror",
-        ))
+        Err(anyhow!("miss param for mirror"))
     }
 }

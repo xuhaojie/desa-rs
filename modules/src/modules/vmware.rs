@@ -1,8 +1,9 @@
 use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
+use futures::executor::block_on;
 use std::io;
 use utility::{download::*, platform::*};
-
+use anyhow::anyhow;
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "vmware",
@@ -23,7 +24,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error>  {
     let os = match param.value_of("os") {
         Some(os) => Platform::from(os),
         None => current_platform(),
@@ -34,14 +35,14 @@ fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io:
         Platform::LINUX => "https://www.vmware.com/go/getworkstation-linux",
         Platform::MACOS => "https://www.vmware.com/go/getfusion",
         _ => {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("not support os type {}", os),
-            ));
+            return Err(anyhow!("not support os type {}", os));
         }
     };
     let target_url = utility::download::get_redirected_url(url)?;
     println!("target url: {}", target_url);
     let target_folder = std::path::Path::new("./");
-    download_file_to_folder(target_url.as_str(), target_folder, true)
+
+	let mut rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(download_file_to_folder(&target_url, target_folder, true))
+
 }

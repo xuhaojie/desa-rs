@@ -4,7 +4,7 @@ use dirs;
 use reqwest::Url;
 use std::io::{self, prelude::*, BufWriter};
 use utility::platform::*;
-
+use anyhow::anyhow;
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "pip",
@@ -27,7 +27,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     let mut lines = vec![
         "[global]\n",
         "index-url=https://pypi.tuna.tsinghua.edu.cn/simple\n",
@@ -63,13 +63,13 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
 
             let home_dir = match dirs::home_dir() {
                 Some(path) => path,
-                None => return Err(io::Error::new(io::ErrorKind::Other, "can't get home dir")),
+                None => return Err(anyhow!("can't get home dir")),
             };
 
             let (folder_name, file_name, backup_file) = match current_platform() {
                 Platform::LINUX | Platform::MACOS => (".pip", "pip.conf", "pip.conf.bak"),
                 Platform::WINDOWS => ("pip", "pip.ini", "pip.ini.bak"),
-                _ => return Err(io::Error::new(io::ErrorKind::Other, "unsupported platform")),
+                _ => return Err(anyhow!("unsupported platform")),
             };
 
             let target_path = home_dir.join(folder_name);
@@ -93,12 +93,9 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
             println!("set proxy to {} succeeded", mirror);
             Ok(())
         } else {
-            Err(io::Error::new(io::ErrorKind::Other, "invalid mirror"))
+            Err(anyhow!("invalid mirror"))
         }
     } else {
-        Err(io::Error::new(
-            io::ErrorKind::Other,
-            "miss param for mirror",
-        ))
+        Err(anyhow!("miss param for mirror"))
     }
 }

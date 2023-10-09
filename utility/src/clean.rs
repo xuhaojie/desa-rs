@@ -24,7 +24,7 @@ pub fn search_projects(
     Ok(())
 }
 
-pub fn clean_projects(projects: &Vec<String>, cmd: &str, params: &[&str]) -> std::io::Result<()> {
+pub fn clean_projects(projects: &Vec<String>, cmd: &str, params: &[&str]) -> Result<(), anyhow::Error> {
     for project in projects.iter() {
         let mut clean_cmd = std::process::Command::new(cmd);
 

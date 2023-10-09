@@ -2,6 +2,7 @@ use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use utility::file::*;
 use std::{io::{self, prelude::*, BufWriter, BufReader}, fs::File, path::Path};
+use anyhow::anyhow;
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "apt",
@@ -123,7 +124,7 @@ fn gen_ubuntu_apt_config(registry: &Registry, codename: &str) -> Vec<String> {
 }
 
 
-fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     if param.get_flag("list") {
         list_registers();
         return Ok(());
@@ -153,13 +154,10 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
 
             Ok(())
         } else {
-            Err(io::Error::new(io::ErrorKind::Other, "invalid mirror"))
+            Err(anyhow!("invalid mirror"))
         }
     } else {
         list_registers();
-        Err(io::Error::new(
-            io::ErrorKind::Other,
-            "Please specify a registery by name, for example tuna",
-        ))
+        Err(anyhow!("Please specify a registery by name, for example tuna"))
     }
 }

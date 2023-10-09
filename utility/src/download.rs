@@ -1,6 +1,12 @@
 use bytes::{Buf, Bytes};
-use std::io::{self};
+use std::io::{self,Write};
 use std::path::Path;
+use std::fs;
+use std::result::Result::Ok;
+use reqwest::{Client, header};
+use std::env;
+use anyhow::*;
+use indicatif::{ProgressBar, ProgressStyle};
 
 pub fn get_redirected_url(url: &str) -> std::io::Result<String> {
     let client = reqwest::blocking::Client::new();
@@ -31,30 +37,27 @@ pub fn get_redirected_url(url: &str) -> std::io::Result<String> {
     }
 }
 
-pub fn file_name_from_url(url: &str) -> std::io::Result<String> {
+pub fn file_name_from_url(url: &str) ->  Result<String, anyhow::Error> {
     let fields: Vec<&str> = url.split('/').collect();
     if fields.len() < 2 {
-        return Err(io::Error::new(io::ErrorKind::Other, "bad request"));
+        return Err(anyhow!("bad request"));
     }
     let file_name = fields[fields.len() - 1];
     if file_name.len() > 1 {
         Ok(file_name.to_string())
     } else {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            "can't separte file name",
-        ));
+        return  Err(anyhow!("can't separte file name"));
     }
 }
 
-pub fn download(url: &str) -> Result<Bytes, Box<dyn std::error::Error>> {
+pub fn download(url: &str) -> Result<Bytes, anyhow::Error> {
     let body = reqwest::blocking::get(url)?.bytes()?;
     Ok(body)
 }
 use std::fs::File;
 use std::io::copy;
 
-pub fn download_file_to_folder(url: &str, folder: &Path, over_write: bool) -> std::io::Result<()> {
+pub fn download_file_to_folder_pre(url: &str, folder: &Path, over_write: bool) ->  Result<(), anyhow::Error>{
     let file_name = file_name_from_url(url)?;
     println!("filename to get: {}", file_name);
     let target_file = folder.join(file_name);
@@ -62,7 +65,7 @@ pub fn download_file_to_folder(url: &str, folder: &Path, over_write: bool) -> st
         if over_write {
             let _ = std::fs::remove_file(target_file.as_path());
         } else {
-            return Err(io::Error::new(io::ErrorKind::Other, "file exists"));
+            return Err(anyhow!("file exists"));
         }
     }
 
@@ -99,62 +102,63 @@ pub fn download_file_to_folder(url: &str, folder: &Path, over_write: bool) -> st
         }
         Err(e) => {
             println!("Error reading {}", e.to_string());
-            return Err(io::Error::new(io::ErrorKind::Other, "request failed {}"));
+            return Err(anyhow!("request failed"));
         }
     }
 }
-/*
-// Define a custom progress reporter:
-struct SimpleReporterPrivate {
-    last_update: std::time::Instant,
-    max_progress: Option<u64>,
-    message: String,
-}
-struct SimpleReporter {
-    private: std::sync::Mutex<Option<SimpleReporterPrivate>>,
-}
 
-impl SimpleReporter {
-    fn create() -> std::sync::Arc<Self> {
-        std::sync::Arc::new(Self {
-            private: std::sync::Mutex::new(None),
-        })
-    }
-}
 
-impl downloader::progress::Reporter for SimpleReporter {
-    fn setup(&self, max_progress: Option<u64>, message: &str) {
-        let private = SimpleReporterPrivate {
-            last_update: std::time::Instant::now(),
-            max_progress,
-            message: message.to_owned(),
-        };
-
-        let mut guard = self.private.lock().unwrap();
-        *guard = Some(private);
-    }
-
-    fn progress(&self, current: u64) {
-        if let Some(p) = self.private.lock().unwrap().as_mut() {
-            let max_bytes = match p.max_progress {
-                Some(bytes) => format!("{:?}", bytes),
-                None => "{unknown}".to_owned(),
-            };
-            if p.last_update.elapsed().as_millis() >= 1000 {
-                println!("{} of {} bytes. [{}]", current, max_bytes, p.message);
-                p.last_update = std::time::Instant::now();
-            }
+pub async fn download_file_to_folder(url: &str, folder: &Path, over_write: bool) ->  Result<(), anyhow::Error>{
+//pub async fn download_package(url: &str) -> Result<(), anyhow::Error> {
+	let file_name = file_name_from_url(url)?;
+    println!("filename to get: {}", file_name);
+    let target_file = folder.join(file_name);
+    if target_file.exists() {
+        if over_write {
+            let _ = std::fs::remove_file(target_file.as_path());
+        } else {
+            return Err(anyhow!("file exists"));
         }
     }
 
-    fn set_message(&self, message: &str) {
-        println!("Message changed to: {}", message);
-    }
+    println!("下载包 {} 到 {:?}", url, target_file);
 
-    fn done(&self) {
-        let mut guard = self.private.lock().unwrap();
-        *guard = None;
-        println!("[DONE]");
+
+    let client = Client::new();
+    let total_size = {
+        let resp = client.head(url).send().await?;
+        if resp.status().is_success() {
+            resp.headers()
+                .get(header::CONTENT_LENGTH)
+                .and_then(|ct_len| ct_len.to_str().ok())
+                .and_then(|ct_len| ct_len.parse().ok())
+                .unwrap_or(0)
+        } else {
+            return Err(anyhow!(
+                "Couldn't download URL: {}. Error: {:?}",
+                url,
+                resp.status(),
+            ));
+        }
+    };
+    let client = Client::new();
+    let mut request = client.get(url);
+    let pb = ProgressBar::new(total_size);
+    pb.set_style(ProgressStyle::default_bar()
+        .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")?
+        .progress_chars("#>-"));
+
+    if target_file.exists() {
+        let size = target_file.metadata()?.len().saturating_sub(1);
+        request = request.header(header::RANGE, format!("bytes={}-", size));
+        pb.inc(size);
     }
+    let mut source = request.send().await?;
+    let mut dest = fs::OpenOptions::new().create(true).append(true).open(&target_file)?;
+    while let Some(chunk) = source.chunk().await? {
+        dest.write_all(&chunk)?;
+        pb.inc(chunk.len() as u64);
+    }
+    println!("下载完成");
+    Ok(())
 }
-*/

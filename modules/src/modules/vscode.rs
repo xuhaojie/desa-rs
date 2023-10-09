@@ -1,5 +1,6 @@
 use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
+use futures::executor::block_on;
 use std::fmt;
 use std::io;
 use utility::{arch::*, download::*, package::PackageType, platform::*};
@@ -207,7 +208,7 @@ fn replace_vscode_download_url(url: &str, build: BuildType, newbase: &str) -> St
     }
 }
 
-fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error>  {
     let build = BuildType::STABLE;
 
     let platform = match param.value_of("os") {
@@ -252,5 +253,7 @@ fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io:
         replace_vscode_download_url(&redirected_url, build, "https://vscode.cdn.azure.cn");
     println!("final_url: {}", final_url);
     let target_folder = std::path::Path::new(&folder);
-    download_file_to_folder(&final_url, target_folder, true)
+	let mut rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(download_file_to_folder(&final_url, target_folder, true))
+    
 }

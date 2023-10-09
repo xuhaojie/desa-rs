@@ -30,7 +30,7 @@ pub fn new() -> Box<dyn Module> {
 systemctl restart docker
 */
 
-fn action_setup(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     if let Some(parent) = _parent {
         println!("setup action in {}", parent.name());
     }

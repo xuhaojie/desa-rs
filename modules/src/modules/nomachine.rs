@@ -1,8 +1,9 @@
 use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
+use futures::executor::block_on;
 use std::io;
 use utility::{arch::*, download::*, package::*, platform::*};
-
+use anyhow::anyhow;
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "nomachine",
@@ -46,7 +47,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error>  {
     if let Some(parent) = parent {
         println!("download action in {}", parent.name());
     }
@@ -86,10 +87,7 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::
                 PackageType::ARCHIVE => 2, //url := "https://www.nomachine.com/download/download&id=2" // https://download.nomachine.com/download/7.9/Linux/nomachine_7.9.2_1_x86_64.tar.gz
                 PackageType::DEB => 4, //url := //url := "https://www.nomachine.com/download/download&id=4" // https://download.nomachine.com/download/7.9/Linux/nomachine_7.9.2_1_amd64.deb
                 _ => {
-                    return Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        format!("pkg {} not supported on {} platform", pkg, platform),
-                    ));
+                    return Err(anyhow!("pkg {} not supported on {} platform", pkg, platform));
                 }
             },
             Arch::X86 => match pkg {
@@ -97,30 +95,20 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::
                 PackageType::RPM => 5, //url := "https://www.nomachine.com/download/download&id=5" // https://download.nomachine.com/download/7.9/Linux/nomachine_7.9.2_1_i686.rpm
                 PackageType::DEB => 6, //url := "https://www.nomachine.com/download/download&id=6" // https://download.nomachine.com/download/7.9/Linux/nomachine_7.9.2_1_i386.deb
                 _ => {
-                    return Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        format!("pkg {} not supported on {} platform", pkg, platform),
-                    ));
+                    return Err(anyhow!("pkg {} not supported on {} platform", pkg, platform));
                 }
             },
             _ => {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    format!(
+                return Err(anyhow!(
                         "arch not supported on {} platform{}",
                         platform,
-                        arch.to_string()
-                    ),
-                ));
+                        arch.to_string()));
             }
         },
         Platform::MACOS => 7, //url = "https://www.nomachine.com/download/download&id=7" // https://download.nomachine.com/download/7.9/MacOSX/nomachine_7.9.2_1.dmg
         Platform::WINDOWS => 8, //"https://www.nomachine.com/download/download&id=8" // https://download.nomachine.com/download/7.9/Windows/nomachine_7.9.2_1.exe
         _ => {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("os {} not supported", platform),
-            ));
+            return Err(anyhow!("os {} not supported", platform));
         }
     };
 
@@ -137,17 +125,11 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::
                 //println!("body = {:?}", body);
                 body
             } else {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("os {} not supported", platform),
-                ));
+                return Err(anyhow!("os {} not supported", platform));
             }
         }
         _ => {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("os {} not supported", platform),
-            ))
+            return Err(anyhow!("os {} not supported", platform));
         }
     };
 
@@ -157,24 +139,20 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::
         println!("start:{}", index);
         index
     } else {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!("os {} not supported", platform),
-        ));
+        return Err(anyhow!("os {} not supported", platform));
     };
 
     let end = if let Some(index) = content[start..].find("');\"") {
         index
     } else {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!("os {} not supported", platform),
-        ));
+        return Err(anyhow!("os {} not supported", platform));
     };
 
     let target_url = content[start + 1..start + end].to_string();
     println!("target url: {}", target_url);
 
     let target_folder = std::path::Path::new(&folder);
-    download_file_to_folder(&target_url, target_folder, true)
+    
+	let mut rt = tokio::runtime::Runtime::new().unwrap();
+	rt.block_on(download_file_to_folder(&target_url, target_folder, true))
 }
