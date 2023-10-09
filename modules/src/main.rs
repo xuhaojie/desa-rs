@@ -26,12 +26,11 @@ impl Module for BaseModule {
         &self.name
     }
     fn command(&self) -> Command<'static> {
-        let cmd = Command::new(self.name()).about(self.description);
-        let mut c: Command = cmd;
+        let mut cmd = Command::new(self.name()).about(self.description);
         for action in &self.actions {
-            c = c.subcommand((action.cmd)());
+            cmd = cmd.subcommand((action.cmd)());
         }
-        c
+        cmd
     }
 
     fn execute(&self, _parent: Option<Box<dyn Module>>, param: &ArgMatches) -> std::io::Result<()> {
@@ -45,7 +44,7 @@ impl Module for BaseModule {
             }
         };
 
-        self.command().print_help();
+        let _ = self.command().print_help();
         return Err(io::Error::new(
             io::ErrorKind::Other,
             format!("Please specify sub command for '{}.'", self.name()),
