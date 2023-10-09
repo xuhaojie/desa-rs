@@ -1,5 +1,6 @@
 use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
+use utility::file::*;
 use std::{io::{self, prelude::*, BufWriter, BufReader}, fs::File, path::Path};
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -121,6 +122,7 @@ fn gen_ubuntu_apt_config(registry: &Registry, codename: &str) -> Vec<String> {
     result
 }
 
+
 fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     if param.get_flag("list") {
         list_registers();
@@ -145,28 +147,10 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
 
 			println!("code_name: {}",code_name);
             let lines = gen_ubuntu_apt_config(&REGISTRYS[index as usize], code_name);
+			write_lines_to_file(&lines,Path::new("/etc/apt/"),"sources.list", "sources.list.bak");
 
-
-            let target_path = Path::new("/etc/apt/");
-            let target_file = target_path.join("sources.list");
-            let backup_file = target_path.join("sources.list.bak");
-
-            if !target_path.exists() {
-                let _ = std::fs::create_dir(target_path);
-            }
-            if target_file.exists() {
-                if backup_file.exists() {
-                    let _ = std::fs::remove_file(backup_file.as_path());
-                }
-                let _ = std::fs::rename(target_file.as_path(), backup_file.as_path());
-            }
-
-            let mut buffer = BufWriter::new(std::fs::File::create(target_file)?);
-            for line in lines.iter() {
-                buffer.write_all(line.as_bytes())?;
-            }
-            buffer.flush()?;
             println!("set proxy to {} succeeded", mirror);
+
             Ok(())
         } else {
             Err(io::Error::new(io::ErrorKind::Other, "invalid mirror"))

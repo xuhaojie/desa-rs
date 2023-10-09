@@ -2,7 +2,7 @@ use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use std::io::{self, prelude::*, BufWriter};
-use utility::clean::*;
+use utility::{clean::*, file::write_lines_to_file};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -127,7 +127,6 @@ fn gen_config(index: usize) -> Vec<String> {
             i += 1;
         }
     }
-
     result
 }
 
@@ -161,23 +160,7 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
             };
 
             let target_path = home_dir.join(".cargo");
-            let target_file = target_path.join("config");
-            let backup_file = target_path.join("config.bak");
-            if !target_path.exists() {
-                let _ = std::fs::create_dir(target_path);
-            }
-            if target_file.exists() {
-                if backup_file.exists() {
-                    let _ = std::fs::remove_file(backup_file.as_path());
-                }
-                let _ = std::fs::rename(target_file.as_path(), backup_file.as_path());
-            }
-
-            let mut buffer = BufWriter::new(std::fs::File::create(target_file)?);
-            for line in lines.iter() {
-                buffer.write_all(line.as_bytes())?;
-            }
-            buffer.flush()?;
+			write_lines_to_file(&lines,&target_path,"config", "config.bak");
             println!("set proxy to {} succeeded", mirror);
             Ok(())
         } else {

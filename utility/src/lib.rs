@@ -4,6 +4,7 @@ pub mod download;
 pub mod execute;
 pub mod package;
 pub mod platform;
+pub mod file;
 #[cfg(test)]
 mod tests {
     #[test]
