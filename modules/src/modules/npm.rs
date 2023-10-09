@@ -25,7 +25,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let mirros = ["origin", "taobao"];
     if let Some(mirror) = param.value_of("mirror") {
         let mut target = -1;

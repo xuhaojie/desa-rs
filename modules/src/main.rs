@@ -1,6 +1,6 @@
 pub mod modules;
 use crate::modules::*;
-use clap::{App, Arg, ArgMatches, Command, SubCommand};
+use clap::{ArgMatches, Command};
 use std::io;
 
 pub trait Module {
@@ -35,7 +35,7 @@ impl Module for BaseModule {
         c
     }
 
-    fn execute(&self, parent: Option<Box<dyn Module>>, param: &ArgMatches) -> std::io::Result<()> {
+    fn execute(&self, _parent: Option<Box<dyn Module>>, param: &ArgMatches) -> std::io::Result<()> {
         if let Some(action) = param.subcommand() {
             for act in &self.actions {
                 if act.name == action.0 {

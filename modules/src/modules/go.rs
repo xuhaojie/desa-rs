@@ -1,7 +1,7 @@
 use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
-use dirs;
-use std::io::{self, prelude::*, BufWriter};
+
+use std::io::{self};
 use utility::{clean::*, execute::*};
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -19,7 +19,7 @@ pub fn new() -> Box<dyn Module> {
                                 .long("path")
                                 .help("Set start path")
                                 .takes_value(true),
-                        )						
+                        )
                 },
                 execute: action_clean,
             },
@@ -35,7 +35,6 @@ pub fn new() -> Box<dyn Module> {
                                 .help("mirror name, [goproxy.cn, goproxy.io]")
                                 .takes_value(true),
                         )
-
                 },
                 execute: action_setup_proxy,
             },
@@ -43,8 +42,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-
-fn action_clean(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let path = match param.value_of("path") {
         Some(p) => p.to_owned(),
         None => String::from(std::env::current_dir()?.as_path().to_str().unwrap()),
@@ -69,7 +67,7 @@ fn action_clean(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Res
     Ok(())
 }
 
-fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     //$ go env -w GO111MODULE=on
     //$ go env -w GOPROXY=https://goproxy.cn,direct
     let mirros = ["goproxy.cn", "goproxy.io"];

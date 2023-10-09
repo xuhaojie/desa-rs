@@ -1,4 +1,4 @@
-use crate::{BaseModule,BasicAction,  Module};
+use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use std::io::{self, prelude::*, BufWriter};
@@ -6,40 +6,44 @@ use utility::clean::*;
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
-		name: "cargo",
-		description:"Setup mirror or clean cargo projects",
-		actions: vec![
-			BasicAction {
-				name: "clean",
-				cmd: || {
-					Command::new("clean").about("clean cargo project builds recursively").arg(
-						Arg::new("path")
-							.short('p')
-							.long("path")
-							.help("set start path for clean")
-							.takes_value(true),
-					)
-				},
-				execute: action_clean,
-			},
-			BasicAction {
-				name: "proxy",
-				cmd: || {
-					Command::new("proxy").about("clean cargo projects builds").arg(
-						Arg::new("mirror")
-							.short('m')
-							.long("mirror")
-							.help("mirror name, [tuna, sjtu, ustc, rustcc]")
-							.takes_value(true),
-					)
-				},
-				execute: action_setup_proxy,
-			},
+        name: "cargo",
+        description: "Setup mirror or clean cargo projects",
+        actions: vec![
+            BasicAction {
+                name: "clean",
+                cmd: || {
+                    Command::new("clean")
+                        .about("clean cargo project builds recursively")
+                        .arg(
+                            Arg::new("path")
+                                .short('p')
+                                .long("path")
+                                .help("set start path for clean")
+                                .takes_value(true),
+                        )
+                },
+                execute: action_clean,
+            },
+            BasicAction {
+                name: "proxy",
+                cmd: || {
+                    Command::new("proxy")
+                        .about("clean cargo projects builds")
+                        .arg(
+                            Arg::new("mirror")
+                                .short('m')
+                                .long("mirror")
+                                .help("mirror name, [tuna, sjtu, ustc, rustcc]")
+                                .takes_value(true),
+                        )
+                },
+                execute: action_setup_proxy,
+            },
         ],
     })
 }
 
-fn action_clean(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let path = match param.value_of("path") {
         Some(p) => p.to_owned(),
         //None => return Err(io::Error::new(io::ErrorKind::Other,"please specify a path")),
@@ -52,7 +56,7 @@ fn action_clean(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Res
     return clean_projects(&projects, "cargo", &["clean"]);
 }
 
-fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let mut lines = vec![
         "[source.crates-io]\n",
         "registry =\"https://github.com/rust-lang/crates.io-index\"\n",
@@ -71,7 +75,6 @@ fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::i
         "[source.rustcc]\n",
         "registry = \"https://code.aliyun.com/rustcc/crates.io-index.git\"\n\n",
     ];
-
 
     let mirros = ["tuna", "sjtu", "ustc", "rustcc"];
 
@@ -96,13 +99,13 @@ fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::i
             let target_file = target_path.join("config");
             let backup_file = target_path.join("config.bak");
             if !target_path.exists() {
-                std::fs::create_dir(target_path);
+                let _ = std::fs::create_dir(target_path);
             }
             if target_file.exists() {
                 if backup_file.exists() {
-                    std::fs::remove_file(backup_file.as_path());
+                    let _ = std::fs::remove_file(backup_file.as_path());
                 }
-                std::fs::rename(target_file.as_path(), backup_file.as_path());
+                let _ = std::fs::rename(target_file.as_path(), backup_file.as_path());
             }
 
             let mut buffer = BufWriter::new(std::fs::File::create(target_file)?);

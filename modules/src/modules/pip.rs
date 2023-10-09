@@ -3,7 +3,7 @@ use clap::{Arg, ArgMatches, Command};
 use dirs;
 use reqwest::Url;
 use std::io::{self, prelude::*, BufWriter};
-use utility::{clean::*, platform::*};
+use utility::platform::*;
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -27,7 +27,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
+fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let mut lines = vec![
         "[global]\n",
         "index-url=https://pypi.tuna.tsinghua.edu.cn/simple\n",
@@ -76,13 +76,13 @@ fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::i
             let target_file = target_path.join(file_name);
             let backup_file = target_path.join(backup_file);
             if !target_path.exists() {
-                std::fs::create_dir(target_path);
+                let _ = std::fs::create_dir(target_path);
             }
             if target_file.exists() {
                 if backup_file.exists() {
-                    std::fs::remove_file(backup_file.as_path());
+                    let _ = std::fs::remove_file(backup_file.as_path());
                 }
-                std::fs::rename(target_file.as_path(), backup_file.as_path());
+                let _ = std::fs::rename(target_file.as_path(), backup_file.as_path());
             }
 
             let mut buffer = BufWriter::new(std::fs::File::create(target_file)?);
