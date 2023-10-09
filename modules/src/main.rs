@@ -101,18 +101,22 @@ fn main() -> std::io::Result<()> {
 
     // 你可以通过以下方式处理有关子命令的信息：按名称请求它们的匹配（如下所示）
     // 仅请求正在使用的名称或两者同时请求
-
+    let mut found = false;
     for module in &modules {
         if let Some(matches) = matches.subcommand_matches(module.name()) {
+            found = true;
             //println!("execute module {}", module.name());
             let result = module.execute(None, matches);
             if let Err(e) = result {
                 println!("{}", e.to_string());
             }
+
             break;
         }
     }
-
+    if !found {
+        println!("please specify a command, for more infomation please type desa --help");
+    }
     Ok(())
 }
 
