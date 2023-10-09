@@ -147,7 +147,7 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
 
 			println!("code_name: {}",code_name);
             let lines = gen_ubuntu_apt_config(&REGISTRYS[index as usize], code_name);
-			write_lines_to_file(&lines,Path::new("/etc/apt/"),"sources.list", "sources.list.bak");
+			write_lines_to_file(&lines,Path::new("/etc/apt/"),"sources.list", "sources.list.bak")?;
 
             println!("set proxy to {} succeeded", mirror);
 

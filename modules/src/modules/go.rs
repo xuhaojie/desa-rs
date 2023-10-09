@@ -95,13 +95,12 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> std::
                 cmd: "go",
                 params: vec!["env", "-w", "GO111MODULE=on"],
             };
-            //let cmd = format!("git config --global user.name {}", user);
-
             if let Ok(code) = execute_command(&cmd1) {
                 if 0 == code {
                     println!("exec {} succeed", cmd1.to_string());
                 }
             }
+
             let proxy = format!("GOPROXY={}", url);
             let cmd2 = Cmd {
                 cmd: "go",

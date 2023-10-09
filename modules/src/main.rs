@@ -56,7 +56,7 @@ fn main() -> std::io::Result<()> {
     let modules: Vec<Box<dyn Module>> = vec![
         apt::new(),
         cargo::new(),
-        // docker::new(), // 功能尚不能用
+        docker::new(),
         git::new(),
         go::new(),
         pip::new(),
