@@ -69,26 +69,7 @@ fn main() -> std::io::Result<()> {
     let mut cmd = Command::new("desa")
         .version("1.0")
         .author("Xu Haojie <xuhaojie@hotmail.com>")
-        .about("Development enveriment setup assist")
-        .arg(
-            Arg::with_name("config")
-                .short('c')
-                .long("config")
-                .value_name("FILE")
-                .help("Sets a custom config file")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("INPUT")
-                .help("Sets the input file to use")
-                .required(false)
-                .index(1),
-        )
-        .arg(
-            Arg::with_name("ver")
-                .short('v')
-                .help("Sets the level of verbosity"),
-        );
+        .about("Development enveriment setup assist");
 
     for module in &modules {
         cmd = cmd.subcommand(module.command());

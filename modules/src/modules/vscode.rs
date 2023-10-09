@@ -35,67 +35,54 @@ pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "vscode",
         description: "Download vscode",
-        actions: vec![
-            BasicAction {
-                name: "download",
-                cmd: || {
-                    Command::new("download")
-                        .about("download vscode")
-                        .arg(
-                            Arg::new("proxy")
-                                .short('p')
-                                .long("proxy")
-                                .help("Sets a custom proxy")
-                                .takes_value(true),
-                        )
-                        .arg(
-                            Arg::new("os")
-                                .short('o')
-                                .long("os")
-                                .help("os type")
-                                .takes_value(true),
-                        )
-                        .arg(
-                            Arg::new("arch")
-                                .short('a')
-                                .long("arch")
-                                .help("arch type")
-                                .takes_value(true),
-                        )
-                        .arg(
-                            Arg::new("package")
-                                .short('k')
-                                .long("package")
-                                .help("package type")
-                                .takes_value(true),
-                        )
-                        .arg(
-                            Arg::new("folder")
-                                .short('f')
-                                .long("folder")
-                                .help("target folder")
-                                .takes_value(true),
-                        )
-                        .arg(
-                            Arg::with_name("debug")
-                                .short('d')
-                                .help("print debug information verbosely"),
-                        )
-                },
-                execute: action_download,
-            },
-            BasicAction {
-                name: "setup",
-                cmd: || {
-                    Command::new("setup").arg(
+        actions: vec![BasicAction {
+            name: "download",
+            cmd: || {
+                Command::new("download")
+                    .about("download vscode")
+                    .arg(
+                        Arg::new("proxy")
+                            .short('p')
+                            .long("proxy")
+                            .help("Sets a custom proxy")
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("os")
+                            .short('o')
+                            .long("os")
+                            .help("os type")
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("arch")
+                            .short('a')
+                            .long("arch")
+                            .help("arch type")
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("package")
+                            .short('k')
+                            .long("package")
+                            .help("package type")
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::new("folder")
+                            .short('f')
+                            .long("folder")
+                            .help("target folder")
+                            .takes_value(true),
+                    )
+                    .arg(
                         Arg::with_name("debug")
                             .short('d')
                             .help("print debug information verbosely"),
                     )
-                },
-                execute: action_setup,
             },
-        ],
+            execute: action_download,
+        }],
     })
 }
 
@@ -266,15 +253,4 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::
     println!("final_url: {}", final_url);
     let target_folder = std::path::Path::new(&folder);
     download_file(&final_url, target_folder, true)
-}
-
-fn action_setup(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
-    if let Some(parent) = parent {
-        println!("setup action in {}", parent.name());
-    }
-    if let Some(action) = param.value_of("proxy") {
-        let config = param.value_of("proxy").unwrap_or("default.conf");
-        println!("Value for proxy: {}", config);
-    }
-    Ok(())
 }
