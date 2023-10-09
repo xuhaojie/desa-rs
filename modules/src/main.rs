@@ -91,7 +91,7 @@ fn main() -> std::io::Result<()> {
         }
     }
     if !found {
-        cmd.print_help();
+        let _ = cmd.print_help();
     }
     Ok(())
 }
