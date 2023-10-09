@@ -1,4 +1,4 @@
-use crate::{BasicAction, BaseModule, Module};
+use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use reqwest::Url;
@@ -7,26 +7,25 @@ use utility::{clean::*, platform::*};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
-		name: "pip",
-		description:"Setup pip",
-		actions: vec![BasicAction {
-			name: "proxy",
-			cmd: || {
-				Command::new("download")
-					.about("controls testing features")
-					.arg(
-						Arg::new("mirror")
-							.short('m')
-							.long("mirror")
-							.help("Set mirror name")
-							.takes_value(true),
-					)
-			},
-			execute: action_setup_proxy,
-		}],
-	})
+        name: "pip",
+        description: "Setup pip",
+        actions: vec![BasicAction {
+            name: "proxy",
+            cmd: || {
+                Command::new("download")
+                    .about("controls testing features")
+                    .arg(
+                        Arg::new("mirror")
+                            .short('m')
+                            .long("mirror")
+                            .help("set mirror name, [tuna, 163, aliyun]")
+                            .takes_value(true),
+                    )
+            },
+            execute: action_setup_proxy,
+        }],
+    })
 }
-
 
 fn action_setup_proxy(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::Result<()> {
     let mut lines = vec![

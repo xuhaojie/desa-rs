@@ -58,7 +58,7 @@ use tempfile::Builder;
 
 pub fn download_file(url: &str, folder: &Path, over_write: bool) -> std::io::Result<()> {
     let file_name = file_name_from_url(url)?;
-    println!("get filename: {}", file_name);
+    println!("filename to get: {}", file_name);
     let over_write = true;
     let target_file = folder.join(file_name);
     if target_file.exists() {

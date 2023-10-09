@@ -1,27 +1,27 @@
-use crate::{BasicAction, BaseModule, Module};
+use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use std::io;
 use utility::execute::*;
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
-		name: "npm",
-		description:"Setup npm proxy",
-		actions: vec![
-			BasicAction {
-				name: "proxy",
-				cmd: || {
-					Command::new("proxy").about("clean cargo projects builds").arg(
-						Arg::new("mirror")
-							.short('m')
-							.long("mirror")
-							.help("mirror name, one of tuna, sjtu, ustc, rustcc")
-							.takes_value(true),
-					)
-				},
-				execute: action_setup_proxy,
-			},
-        ],
+        name: "npm",
+        description: "Setup npm proxy",
+        actions: vec![BasicAction {
+            name: "proxy",
+            cmd: || {
+                Command::new("proxy")
+                    .about("clean cargo projects builds")
+                    .arg(
+                        Arg::new("mirror")
+                            .short('m')
+                            .long("mirror")
+                            .help("mirror name, [taobao, origin]")
+                            .takes_value(true),
+                    )
+            },
+            execute: action_setup_proxy,
+        }],
     })
 }
 

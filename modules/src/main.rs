@@ -54,9 +54,9 @@ impl Module for BaseModule {
 
 fn main() -> std::io::Result<()> {
     let modules: Vec<Box<dyn Module>> = vec![
-        apt::new(),
+        // apt::new(), // 功能尚不能用
         cargo::new(),
-        docker::new(),
+        // docker::new(), // 功能尚不能用
         git::new(),
         go::new(),
         pip::new(),

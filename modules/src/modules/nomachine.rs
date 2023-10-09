@@ -41,13 +41,6 @@ pub fn new() -> Box<dyn Module> {
                             .help("target folder")
                             .takes_value(true),
                     )
-                    .arg(
-                        Arg::new("proxy")
-                            .short('p')
-                            .long("proxy")
-                            .help("Sets a custom proxy")
-                            .takes_value(true),
-                    )
             },
             execute: action_download,
         }],

@@ -10,22 +10,13 @@ pub fn new() -> Box<dyn Module> {
         actions: vec![BasicAction {
             name: "download",
             cmd: || {
-                Command::new("download")
-                    .about("download vmware")
-                    .arg(
-                        Arg::new("proxy")
-                            .short('p')
-                            .long("proxy")
-                            .help("Sets a custom proxy")
-                            .takes_value(true),
-                    )
-                    .arg(
-                        Arg::new("os")
-                            .short('o')
-                            .long("os")
-                            .help("os type")
-                            .takes_value(true),
-                    )
+                Command::new("download").about("download vmware").arg(
+                    Arg::new("os")
+                        .short('o')
+                        .long("os")
+                        .help("os type,[linux, macos ,windows]")
+                        .takes_value(true),
+                )
             },
             execute: action_download,
         }],
@@ -54,6 +45,6 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> std::io::
     };
     let target_url = utility::download::get_redirected_url(url)?;
     println!("get target url: {}", target_url);
-    let target_folder = std::path::Path::new("/tmp");
+    let target_folder = std::path::Path::new("./");
     download_file(target_url.as_str(), target_folder, true)
 }
