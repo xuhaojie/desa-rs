@@ -6,7 +6,6 @@ use std::io;
 pub trait Module {
     fn name(&self) -> &'static str;
     fn command(&self) -> Command<'static>;
-    //fn register<'a>(&self, app : App<'a>) -> App<'a>;
     fn execute(&self, parent: Option<Box<dyn Module>>, param: &ArgMatches) -> std::io::Result<()>;
 }
 

@@ -25,5 +25,6 @@ fn action_setup(_parent: Option<&dyn Module>, _param: &ArgMatches) -> std::io::R
     if let Some(parent) = _parent {
         println!("setup action in {}", parent.name());
     }
+    //sudo sed -i 's/archive.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
     Ok(())
 }
