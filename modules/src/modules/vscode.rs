@@ -1,6 +1,5 @@
 use crate::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
-use futures::executor::block_on;
 use std::fmt;
 use std::io;
 use utility::{arch::*, download::*, package::PackageType, platform::*};
@@ -196,9 +195,6 @@ fn gen_download_url(
 }
 
 fn replace_vscode_download_url(url: &str, build: BuildType, newbase: &str) -> String {
-    // newbase = "https://vscode.cdn.azure.cn"
-    //https: //vscode.cdn.azure.cn/stable/b4c1bd0a9b03c749ea011b06c6d2676c8091a70c/VSCodeUserSetup-x64-1.57.0.exe
-
     println!("url:{}", url);
     let target_str = format!("/{}/", build);
     if let Some(index) = url.find(&target_str) {
@@ -208,7 +204,7 @@ fn replace_vscode_download_url(url: &str, build: BuildType, newbase: &str) -> St
     }
 }
 
-fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error>  {
+fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     let build = BuildType::STABLE;
 
     let platform = match param.value_of("os") {
@@ -253,7 +249,6 @@ fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(
         replace_vscode_download_url(&redirected_url, build, "https://vscode.cdn.azure.cn");
     println!("final_url: {}", final_url);
     let target_folder = std::path::Path::new(&folder);
-	let mut rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(download_file_to_folder(&final_url, target_folder, true))
-    
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(download_file_to_folder(&final_url, target_folder, true))
 }

@@ -1,10 +1,10 @@
 use crate::{BaseModule, BasicAction, Module};
+use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use reqwest::Url;
-use std::io::{self, prelude::*, BufWriter};
+use std::io::{prelude::*, BufWriter};
 use utility::platform::*;
-use anyhow::anyhow;
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "pip",
@@ -27,7 +27,10 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
+fn action_setup_proxy(
+    _parent: Option<&dyn Module>,
+    param: &ArgMatches,
+) -> Result<(), anyhow::Error> {
     let mut lines = vec![
         "[global]\n",
         "index-url=https://pypi.tuna.tsinghua.edu.cn/simple\n",

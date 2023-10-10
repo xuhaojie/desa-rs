@@ -1,8 +1,7 @@
 use crate::{BaseModule, BasicAction, Module};
-use clap::{Arg, ArgMatches, Command};
-use std::io;
-use utility::execute::*;
 use anyhow::anyhow;
+use clap::{Arg, ArgMatches, Command};
+use utility::execute::{execute_command, Cmd};
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "npm",
@@ -25,7 +24,10 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
+fn action_setup_proxy(
+    _parent: Option<&dyn Module>,
+    param: &ArgMatches,
+) -> Result<(), anyhow::Error> {
     let mirros = ["origin", "taobao"];
     if let Some(mirror) = param.value_of("mirror") {
         let mut target = -1;

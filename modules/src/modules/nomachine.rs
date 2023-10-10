@@ -1,9 +1,7 @@
 use crate::{BaseModule, BasicAction, Module};
-use clap::{Arg, ArgMatches, Command};
-use futures::executor::block_on;
-use std::io;
-use utility::{arch::*, download::*, package::*, platform::*};
 use anyhow::anyhow;
+use clap::{Arg, ArgMatches, Command};
+use utility::{arch::*, download::*, package::*, platform::*};
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "nomachine",
@@ -47,7 +45,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error>  {
+fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     if let Some(parent) = parent {
         println!("download action in {}", parent.name());
     }
@@ -87,7 +85,11 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> Result<()
                 PackageType::ARCHIVE => 2, //url := "https://www.nomachine.com/download/download&id=2" // https://download.nomachine.com/download/7.9/Linux/nomachine_7.9.2_1_x86_64.tar.gz
                 PackageType::DEB => 4, //url := //url := "https://www.nomachine.com/download/download&id=4" // https://download.nomachine.com/download/7.9/Linux/nomachine_7.9.2_1_amd64.deb
                 _ => {
-                    return Err(anyhow!("pkg {} not supported on {} platform", pkg, platform));
+                    return Err(anyhow!(
+                        "pkg {} not supported on {} platform",
+                        pkg,
+                        platform
+                    ));
                 }
             },
             Arch::X86 => match pkg {
@@ -95,14 +97,19 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> Result<()
                 PackageType::RPM => 5, //url := "https://www.nomachine.com/download/download&id=5" // https://download.nomachine.com/download/7.9/Linux/nomachine_7.9.2_1_i686.rpm
                 PackageType::DEB => 6, //url := "https://www.nomachine.com/download/download&id=6" // https://download.nomachine.com/download/7.9/Linux/nomachine_7.9.2_1_i386.deb
                 _ => {
-                    return Err(anyhow!("pkg {} not supported on {} platform", pkg, platform));
+                    return Err(anyhow!(
+                        "pkg {} not supported on {} platform",
+                        pkg,
+                        platform
+                    ));
                 }
             },
             _ => {
                 return Err(anyhow!(
-                        "arch not supported on {} platform{}",
-                        platform,
-                        arch.to_string()));
+                    "arch not supported on {} platform{}",
+                    platform,
+                    arch.to_string()
+                ));
             }
         },
         Platform::MACOS => 7, //url = "https://www.nomachine.com/download/download&id=7" // https://download.nomachine.com/download/7.9/MacOSX/nomachine_7.9.2_1.dmg
@@ -152,7 +159,7 @@ fn action_download(parent: Option<&dyn Module>, param: &ArgMatches) -> Result<()
     println!("target url: {}", target_url);
 
     let target_folder = std::path::Path::new(&folder);
-    
-	let mut rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(download_file_to_folder(&target_url, target_folder, true))
+
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(download_file_to_folder(&target_url, target_folder, true))
 }

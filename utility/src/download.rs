@@ -1,12 +1,11 @@
-use bytes::{Buf, Bytes};
-use std::io::{self,Write};
-use std::path::Path;
-use std::fs;
-use std::result::Result::Ok;
-use reqwest::{Client, header};
-use std::env;
 use anyhow::*;
+use bytes::{Buf, Bytes};
 use indicatif::{ProgressBar, ProgressStyle};
+use reqwest::{header, Client};
+use std::fs;
+use std::io::{self, Write};
+use std::path::Path;
+use std::result::Result::Ok;
 
 pub fn get_redirected_url(url: &str) -> std::io::Result<String> {
     let client = reqwest::blocking::Client::new();
@@ -37,7 +36,7 @@ pub fn get_redirected_url(url: &str) -> std::io::Result<String> {
     }
 }
 
-pub fn file_name_from_url(url: &str) ->  Result<String, anyhow::Error> {
+pub fn file_name_from_url(url: &str) -> Result<String, anyhow::Error> {
     let fields: Vec<&str> = url.split('/').collect();
     if fields.len() < 2 {
         return Err(anyhow!("bad request"));
@@ -46,7 +45,7 @@ pub fn file_name_from_url(url: &str) ->  Result<String, anyhow::Error> {
     if file_name.len() > 1 {
         Ok(file_name.to_string())
     } else {
-        return  Err(anyhow!("can't separte file name"));
+        return Err(anyhow!("can't separte file name"));
     }
 }
 
@@ -57,7 +56,11 @@ pub fn download(url: &str) -> Result<Bytes, anyhow::Error> {
 use std::fs::File;
 use std::io::copy;
 
-pub fn download_file_to_folder_pre(url: &str, folder: &Path, over_write: bool) ->  Result<(), anyhow::Error>{
+pub fn download_file_to_folder_pre(
+    url: &str,
+    folder: &Path,
+    over_write: bool,
+) -> Result<(), anyhow::Error> {
     let file_name = file_name_from_url(url)?;
     println!("filename to get: {}", file_name);
     let target_file = folder.join(file_name);
@@ -107,10 +110,12 @@ pub fn download_file_to_folder_pre(url: &str, folder: &Path, over_write: bool) -
     }
 }
 
-
-pub async fn download_file_to_folder(url: &str, folder: &Path, over_write: bool) ->  Result<(), anyhow::Error>{
-//pub async fn download_package(url: &str) -> Result<(), anyhow::Error> {
-	let file_name = file_name_from_url(url)?;
+pub async fn download_file_to_folder(
+    url: &str,
+    folder: &Path,
+    over_write: bool,
+) -> Result<(), anyhow::Error> {
+    let file_name = file_name_from_url(url)?;
     println!("filename to get: {}", file_name);
     let target_file = folder.join(file_name);
     if target_file.exists() {
@@ -121,8 +126,7 @@ pub async fn download_file_to_folder(url: &str, folder: &Path, over_write: bool)
         }
     }
 
-    println!("下载包 {} 到 {:?}", url, target_file);
-
+    println!("source: {}\ntarget: {:?}", url, target_file);
 
     let client = Client::new();
     let total_size = {
@@ -154,11 +158,14 @@ pub async fn download_file_to_folder(url: &str, folder: &Path, over_write: bool)
         pb.inc(size);
     }
     let mut source = request.send().await?;
-    let mut dest = fs::OpenOptions::new().create(true).append(true).open(&target_file)?;
+    let mut dest = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&target_file)?;
     while let Some(chunk) = source.chunk().await? {
         dest.write_all(&chunk)?;
         pb.inc(chunk.len() as u64);
     }
-    println!("下载完成");
+    println!("Finish.");
     Ok(())
 }

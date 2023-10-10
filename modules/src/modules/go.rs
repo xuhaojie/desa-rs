@@ -1,8 +1,8 @@
 use crate::{BaseModule, BasicAction, Module};
-use clap::{Arg, ArgMatches, Command};
 use anyhow::anyhow;
-use std::io::{self};
+use clap::{Arg, ArgMatches, Command};
 use utility::{clean::*, execute::*};
+
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "go",
@@ -67,7 +67,10 @@ fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), 
     Ok(())
 }
 
-fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
+fn action_setup_proxy(
+    _parent: Option<&dyn Module>,
+    param: &ArgMatches,
+) -> Result<(), anyhow::Error> {
     //$ go env -w GO111MODULE=on
     //$ go env -w GOPROXY=https://goproxy.cn,direct
     let mirros = ["goproxy.cn", "goproxy.io"];

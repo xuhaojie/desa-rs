@@ -1,9 +1,8 @@
 use crate::{BaseModule, BasicAction, Module};
+use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use dirs;
-use std::io::{self, prelude::*, BufWriter};
 use utility::{clean::*, file::write_lines_to_file};
-use anyhow::anyhow;
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -98,13 +97,11 @@ static REGISTRYS: [Registry; 5] = [
     },
 ];
 
-
-fn list_registers(){
+fn list_registers() {
     for r in &REGISTRYS {
         print!("{} [{}] \n{}\n", r.caption, r.name, r.url);
     }
 }
-
 
 fn gen_config(index: usize) -> Vec<String> {
     let mut result = Vec::<String>::new();
@@ -131,11 +128,13 @@ fn gen_config(index: usize) -> Vec<String> {
     result
 }
 
-fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
- 
+fn action_setup_proxy(
+    _parent: Option<&dyn Module>,
+    param: &ArgMatches,
+) -> Result<(), anyhow::Error> {
     if param.get_flag("list") {
-		list_registers();
-		return Ok(());
+        list_registers();
+        return Ok(());
     }
 
     if let Some(mirror) = param.value_of("mirror") {
@@ -161,14 +160,16 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Resul
             };
 
             let target_path = home_dir.join(".cargo");
-			write_lines_to_file(&lines,&target_path,"config", "config.bak");
+            write_lines_to_file(&lines, &target_path, "config", "config.bak")?;
             println!("set proxy to {} succeeded", mirror);
             Ok(())
         } else {
             Err(anyhow!("invalid mirror"))
         }
     } else {
-		list_registers();
-        Err(anyhow!("Please specify a registery by name, for example tuna"))
+        list_registers();
+        Err(anyhow!(
+            "Please specify a registery by name, for example tuna"
+        ))
     }
 }

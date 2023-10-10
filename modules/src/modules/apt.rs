@@ -1,8 +1,12 @@
 use crate::{BaseModule, BasicAction, Module};
-use clap::{Arg, ArgMatches, Command};
-use utility::file::*;
-use std::{io::{self, prelude::*, BufWriter, BufReader}, fs::File, path::Path};
 use anyhow::anyhow;
+use clap::{Arg, ArgMatches, Command};
+use std::{
+    fs::File,
+    io::{prelude::*, BufReader},
+    path::Path,
+};
+use utility::file::*;
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "apt",
@@ -57,37 +61,35 @@ fn list_registers() {
     }
 }
 
-fn get_codename() -> Option<&'static str>{
-	
+fn get_codename() -> Option<&'static str> {
     let Ok(input) = File::open("/etc/issue") else {
-		return None;
-	};
+        return None;
+    };
     let mut buffered = BufReader::new(input);
-	let mut line= String::new();
-	let Ok(_) = buffered.read_line(&mut line) else {
+    let mut line = String::new();
+    let Ok(_) = buffered.read_line(&mut line) else {
         return None;
     };
 
-	
-	let tokens: Vec<&str> = line.split_whitespace().collect();
+    let tokens: Vec<&str> = line.split_whitespace().collect();
 
-	if tokens.len() < 3 ||  tokens[0] != "Ubuntu" {
-		return None;
-	}
-	let version = &tokens[1][0..5];
-	
-	//println!("version: {}", version);
-	//let version = "22.04";
-	match version{
-		"22.04" => Some("jammy"),
-		"23.04" => Some("lunar"),
-		"22.10" => Some("kinetic"),
-		"18.04" => Some("bionic"),
-		"16.04" => Some("xenial"),
-		"14.04" => Some("trusty"),
-		"20.04" => Some("focal"),
-		_ => None,
-	}
+    if tokens.len() < 3 || tokens[0] != "Ubuntu" {
+        return None;
+    }
+    let version = &tokens[1][0..5];
+
+    //println!("version: {}", version);
+    //let version = "22.04";
+    match version {
+        "22.04" => Some("jammy"),
+        "23.04" => Some("lunar"),
+        "22.10" => Some("kinetic"),
+        "18.04" => Some("bionic"),
+        "16.04" => Some("xenial"),
+        "14.04" => Some("trusty"),
+        "20.04" => Some("focal"),
+        _ => None,
+    }
 }
 
 #[rustfmt::skip] 
@@ -123,8 +125,10 @@ fn gen_ubuntu_apt_config(registry: &Registry, codename: &str) -> Vec<String> {
     result
 }
 
-
-fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
+fn action_setup_proxy(
+    _parent: Option<&dyn Module>,
+    param: &ArgMatches,
+) -> Result<(), anyhow::Error> {
     if param.get_flag("list") {
         list_registers();
         return Ok(());
@@ -142,13 +146,18 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Resul
         }
 
         if index >= 0 {
-			let Some(code_name) = get_codename() else{
-				return Ok(());
-			};
+            let Some(code_name) = get_codename() else {
+                return Ok(());
+            };
 
-			println!("code_name: {}",code_name);
+            println!("code_name: {}", code_name);
             let lines = gen_ubuntu_apt_config(&REGISTRYS[index as usize], code_name);
-			write_lines_to_file(&lines,Path::new("/etc/apt/"),"sources.list", "sources.list.bak")?;
+            write_lines_to_file(
+                &lines,
+                Path::new("/etc/apt/"),
+                "sources.list",
+                "sources.list.bak",
+            )?;
 
             println!("set proxy to {} succeeded", mirror);
 
@@ -158,6 +167,8 @@ fn action_setup_proxy(_parent: Option<&dyn Module>, param: &ArgMatches) -> Resul
         }
     } else {
         list_registers();
-        Err(anyhow!("Please specify a registery by name, for example tuna"))
+        Err(anyhow!(
+            "Please specify a registery by name, for example tuna"
+        ))
     }
 }

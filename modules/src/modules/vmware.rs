@@ -1,9 +1,7 @@
 use crate::{BaseModule, BasicAction, Module};
-use clap::{Arg, ArgMatches, Command};
-use futures::executor::block_on;
-use std::io;
-use utility::{download::*, platform::*};
 use anyhow::anyhow;
+use clap::{Arg, ArgMatches, Command};
+use utility::{download::*, platform::*};
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "vmware",
@@ -24,7 +22,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error>  {
+fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
     let os = match param.value_of("os") {
         Some(os) => Platform::from(os),
         None => current_platform(),
@@ -42,7 +40,6 @@ fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(
     println!("target url: {}", target_url);
     let target_folder = std::path::Path::new("./");
 
-	let mut rt = tokio::runtime::Runtime::new().unwrap();
-	rt.block_on(download_file_to_folder(&target_url, target_folder, true))
-
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(download_file_to_folder(&target_url, target_folder, true))
 }
