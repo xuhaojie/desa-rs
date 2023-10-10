@@ -1,12 +1,16 @@
 pub mod modules;
 use crate::modules::*;
-use clap::{ArgMatches, Command};
 use anyhow::anyhow;
+use clap::{ArgMatches, Command};
 
 pub trait Module {
     fn name(&self) -> &'static str;
     fn command(&self) -> Command<'static>;
-    fn execute(&self, parent: Option<Box<dyn Module>>, param: &ArgMatches) -> Result<(), anyhow::Error> ;
+    fn execute(
+        &self,
+        parent: Option<Box<dyn Module>>,
+        param: &ArgMatches,
+    ) -> Result<(), anyhow::Error>;
 }
 
 pub struct BasicAction {
@@ -33,7 +37,11 @@ impl Module for BaseModule {
         cmd
     }
 
-    fn execute(&self, _parent: Option<Box<dyn Module>>, param: &ArgMatches) -> Result<(), anyhow::Error>  {
+    fn execute(
+        &self,
+        _parent: Option<Box<dyn Module>>,
+        param: &ArgMatches,
+    ) -> Result<(), anyhow::Error> {
         if let Some(action) = param.subcommand() {
             for act in &self.actions {
                 if act.name == action.0 {
@@ -49,13 +57,10 @@ impl Module for BaseModule {
     }
 }
 
-
-
-
 //#[tokio::main]
 fn main() {
-	//utility::download::download_package("https://www.vmware.com/go/getfusion").await;
-	//return;
+    //utility::download::download_package("https://www.vmware.com/go/getfusion").await;
+    //return;
     let modules: Vec<Box<dyn Module>> = vec![
         apt::new(),
         cargo::new(),
@@ -63,7 +68,7 @@ fn main() {
         git::new(),
         go::new(),
         pip::new(),
-        nomachine::new(),
+        // nomachine::new(), // 下载NoMachine功能不正常，怀疑官方的下载路径做了调整，先关闭这项功能
         npm::new(),
         vmware::new(),
         vscode::new(),
@@ -96,7 +101,6 @@ fn main() {
     if !found {
         let _ = cmd.print_help();
     }
-
 }
 
 // desa git setup -e xuhaojie@hotmail.com -u xuhaojie
