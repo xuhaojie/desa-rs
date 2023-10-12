@@ -5,8 +5,9 @@ use std::{
     io::{prelude::*, BufReader},
     path::Path,
 };
+
 use utility::file::*;
-use utility::mirror::{self,Mirror,list_mirrors};
+use utility::mirror::{self, list_mirrors, Mirror};
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "apt",
@@ -36,7 +37,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-static MIRRORS:[Mirror;2] = [
+static MIRRORS: [Mirror; 2] = [
     Mirror {
         name: "cn.ubuntu",
         caption: "官方中国镜像",
@@ -117,23 +118,23 @@ fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-	if param.get_flag("list") {
+    if param.get_flag("list") {
         list_mirrors(&MIRRORS);
         return Ok(());
     }
-	mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror|{
-		let Some(code_name) = get_codename() else {
-			return Ok(());
-		};
+    mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror| {
+        let Some(code_name) = get_codename() else {
+            return Ok(());
+        };
 
-		println!("code_name: {}", code_name);
-		let lines = gen_ubuntu_apt_config(mirror, code_name);
-		write_lines_to_file(
-			&lines,
-			Path::new("/etc/apt/"),
-			"sources.list",
-			"sources.list.bak",
-		)?;
-		Ok(())
-	})
+        println!("code_name: {}", code_name);
+        let lines = gen_ubuntu_apt_config(mirror, code_name);
+        write_lines_to_file(
+            &lines,
+            Path::new("/etc/apt/"),
+            "sources.list",
+            "sources.list.bak",
+        )?;
+        Ok(())
+    })
 }
