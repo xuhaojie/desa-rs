@@ -5,7 +5,7 @@ use std::path::Path;
 use utility::{
     execute::{execute_command, Cmd},
     file::write_lines_to_file,
-	registry::{self,Registry, list_registers, set_registry},
+	mirror::{self, Mirror, list_mirrors},
 };
 
 pub fn new() -> Box<dyn Module> {
@@ -27,7 +27,7 @@ pub fn new() -> Box<dyn Module> {
 				Arg::new("list")
 					.short('l')
 					.long("list")
-					.help("list available cargo registers")
+					.help("list available cargo mirrors")
 					.action(clap::ArgAction::SetTrue),
 			),
             execute: action_setup_mirror,
@@ -46,31 +46,31 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-static REGISTRYS:[Registry;5] = [
-    Registry {
+static MIRRORS:[Mirror;5] = [
+    Mirror {
         name: "hub.docker.com",
         caption: "官方镜像",
-        url: "https://registry.hub.docker.com",
+        url: "https://mirror.hub.docker.com",
     },
-    Registry {
+    Mirror {
         name: "163",
         caption: "网易镜像",
         url: "http://hub-mirror.c.163.com",
     },
-    Registry {
+    Mirror {
         name: "ustc",
         caption: "中国科学技术大学",
         url: "https://docker.mirrors.ustc.edu.cn",
     },
-    Registry {
+    Mirror {
         name: "tencentyun",
         caption: "腾讯云",
         url: "https://mirror.ccs.tencentyun.com",
     },	
-	Registry {
+	Mirror {
         name: "docker-cn",
         caption: "docker中国",
-        url: "https://registry.docker-cn.com",
+        url: "https://mirror.docker-cn.com",
     },
 ];
 
@@ -79,15 +79,15 @@ fn action_setup_mirror(
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
 	if param.get_flag("list") {
-        list_registers(&REGISTRYS);
+        list_mirrors(&MIRRORS);
         return Ok(());
     }
 
-	registry::setup_proxy_action(param, "mirror", &REGISTRYS, |registry|{
+	mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror|{
 		let mut lines = Vec::<String>::new();
 		lines.push("{\n".to_string());
-		lines.push("\t\"registry-mirrors\": [ \n".to_string());
-		lines.push(format!("\t\t\"{}\"\n" , registry.url));
+		lines.push("\t\"mirror-mirrors\": [ \n".to_string());
+		lines.push(format!("\t\t\"{}\"\n" , mirror.url));
 		lines.push("\t]\n".to_string());
 		lines.push("}\n".to_string());
 

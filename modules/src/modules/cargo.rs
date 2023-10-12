@@ -3,7 +3,7 @@ use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use utility::{clean::*, file::write_lines_to_file};
-use utility::registry::{self,Registry, list_registers, set_registry};
+use utility::mirror::{self,Mirror, list_mirrors};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -64,52 +64,52 @@ fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), 
     return clean_projects(&projects, "cargo", &["clean"]);
 }
 
-static REGISTRYS: [Registry; 5] = [
-    Registry {
+static MIRRORS: [Mirror; 5] = [
+    Mirror {
         name: "crates-io",
         caption: "官方镜像",
         url: "https://github.com/rust-lang/crates.io-index",
     },
-    Registry {
+    Mirror {
         name: "ustc",
         caption: "中国科学技术大学",
         url: "https://mirrors.ustc.edu.cn/crates.io-index",
     },
-    Registry {
+    Mirror {
         name: "sjtu",
         caption: "上海交通大学",
         url: "https://mirrors.sjtug.sjtu.edu.cn/git/crates.io-index",
     },
-    Registry {
+    Mirror {
         name: "tuna",
         caption: "清华大学",
         url: "https://mirrors.tuna.tsinghua.edu.cn/git/crates.io-index.git",
     },
-    Registry {
+    Mirror {
         name: "rustcc",
         caption: "rustcc社区",
         url: "https://code.aliyun.com/rustcc/crates.io-index.git",
     },
 ];
 
-fn gen_config(registry: &Registry) -> Vec<String> {
+fn gen_config(mirror: &Mirror) -> Vec<String> {
     let mut result = Vec::<String>::new();
     let mut i = 0;
 
-    if registry.name == REGISTRYS[0].name {
-        let r = &REGISTRYS[0];
+    if mirror.name == MIRRORS[0].name {
+        let r = &MIRRORS[0];
         result.push(format!(
-            "# {}\n[source.{}]\nregistry = \"{}\"\n",
+            "# {}\n[source.{}]\nMirror = \"{}\"\n",
             r.caption, r.name, r.url
         ));
     } else {
-        for r in &REGISTRYS {
+        for r in &MIRRORS {
             result.push(format!(
-                "# {}\n[source.{}]\nregistry = \"{}\"\n",
+                "# {}\n[source.{}]\nMirror = \"{}\"\n",
                 r.caption, r.name, r.url
             ));
             if i == 0 {
-                result.push(format!("replace-with = \"{}\"\n", registry.name));
+                result.push(format!("replace-with = \"{}\"\n", mirror.name));
             }
             i += 1;
         }
@@ -123,11 +123,11 @@ fn action_setup_proxy(
 ) -> Result<(), anyhow::Error> {
 
 	if param.get_flag("list") {
-        list_registers(&REGISTRYS);
+        list_mirrors(&MIRRORS);
         return Ok(());
     }
-	registry::setup_proxy_action(param, "mirror", &REGISTRYS,|registry|{
-		let lines = gen_config(registry);
+	mirror::setup_mirror_action(param, "mirror", &MIRRORS,|mirror|{
+		let lines = gen_config(mirror);
 		for l in &lines {
 			print!("{}", l);
 		}
@@ -139,7 +139,7 @@ fn action_setup_proxy(
 
 		let target_path = home_dir.join(".cargo");
 		write_lines_to_file(&lines, &target_path, "config", "config.bak")?;
-		println!("set proxy to {} succeeded", registry.name);
+		println!("set proxy to {} succeeded", mirror.name);
 		Ok(())
 	})
 

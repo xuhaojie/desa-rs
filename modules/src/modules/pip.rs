@@ -1,12 +1,7 @@
 use crate::{BaseModule, BasicAction, Module};
-use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
-use dirs;
-use reqwest::Url;
-use std::io::{prelude::*, BufWriter};
 use utility::execute::{execute_command, Cmd};
-use utility::platform::*;
-use utility::registry::{self,Registry, list_registers, set_registry};
+use utility::mirror::{self, Mirror};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -37,23 +32,23 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-static REGISTRYS:[Registry;4] = [
-    Registry {
+static MIRRORS:[Mirror;4] = [
+    Mirror {
         name: "pypi.org",
         caption: "官方镜像",
         url: "https://pypi.org/simple",
     },
-    Registry {
+    Mirror {
         name: "tuna",
         caption: "清华·镜像",
         url: "https://pypi.tuna.tsinghua.edu.cn/simple",
     },
-    Registry {
+    Mirror {
         name: "163",
         caption: "网易镜像",
         url: "https://mirrors.163.com/pypi/simple",
     },
-    Registry {
+    Mirror {
         name: "aliyun",
         caption: "淘宝镜像",
         url: "http://mirrors.aliyun.com/pypi/simple",
@@ -64,10 +59,10 @@ fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-	registry::setup_proxy_action(param,"mirror",&REGISTRYS,|registry|{
+	mirror::setup_mirror_action(param,"mirror", &MIRRORS,|mirror|{
 		let cmd = Cmd {
 			cmd: "pip",
-			params: vec!["config", "set", "global.index-url", registry.url],
+			params: vec!["config", "set", "global.index-url", mirror.url],
 		};
 		if let Ok(code) = execute_command(&cmd) {
 			if 0 == code {}

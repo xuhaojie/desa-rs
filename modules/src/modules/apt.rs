@@ -1,5 +1,4 @@
 use crate::{BaseModule, BasicAction, Module};
-use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use std::{
     fs::File,
@@ -7,7 +6,7 @@ use std::{
     path::Path,
 };
 use utility::file::*;
-use utility::registry::{self,Registry, list_registers, set_registry};
+use utility::mirror::{self,Mirror,list_mirrors};
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "apt",
@@ -37,13 +36,13 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-static REGISTRYS:[Registry;2] = [
-    Registry {
+static MIRRORS:[Mirror;2] = [
+    Mirror {
         name: "cn.ubuntu",
         caption: "官方中国镜像",
         url: "http://cn.archive.ubuntu.com/ubuntu/",
     },
-    Registry {
+    Mirror {
         name: "tuna",
         caption: "清华大学",
         url: "https://mirrors.tuna.tsinghua.edu.cn/ubuntu/",
@@ -82,22 +81,22 @@ fn get_codename() -> Option<&'static str> {
 }
 
 #[rustfmt::skip] 
-fn gen_ubuntu_apt_config(registry: &Registry, codename: &str) -> Vec<String> {
+fn gen_ubuntu_apt_config(mirror: &Mirror, codename: &str) -> Vec<String> {
     let mut result = Vec::<String>::new();
 
     result.push("# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释\n".to_string());
 
-    result.push(format!("deb {} {} main restricted universe multiverse\n", registry.url, codename));
-    result.push(format!("# deb-src {} {} main restricted universe multiverse\n", registry.url, codename));
-	result.push(format!("deb {} {}-updates main restricted universe multiverse\n", registry.url, codename));
-    result.push(format!("# deb-src {} {}-updates main restricted universe multiverse\n", registry.url, codename));
-    result.push(format!("deb {} {}-backports main restricted universe multiverse\n", registry.url, codename));
-    result.push(format!("# deb-src {} {}-updates main restricted universe multiverse\n", registry.url, codename));
+    result.push(format!("deb {} {} main restricted universe multiverse\n", mirror.url, codename));
+    result.push(format!("# deb-src {} {} main restricted universe multiverse\n", mirror.url, codename));
+	result.push(format!("deb {} {}-updates main restricted universe multiverse\n", mirror.url, codename));
+    result.push(format!("# deb-src {} {}-updates main restricted universe multiverse\n", mirror.url, codename));
+    result.push(format!("deb {} {}-backports main restricted universe multiverse\n", mirror.url, codename));
+    result.push(format!("# deb-src {} {}-updates main restricted universe multiverse\n", mirror.url, codename));
 
     result.push("\n".to_string());
 
-    result.push(format!("deb {} {}-security main restricted universe multiverse\n",registry.url, codename));
-    result.push(format!("# deb-src {} {}-security main restricted universe multiverse\n", registry.url, codename));
+    result.push(format!("deb {} {}-security main restricted universe multiverse\n",mirror.url, codename));
+    result.push(format!("# deb-src {} {}-security main restricted universe multiverse\n", mirror.url, codename));
 
     result.push("\n".to_string());
 
@@ -108,8 +107,8 @@ fn gen_ubuntu_apt_config(registry: &Registry, codename: &str) -> Vec<String> {
 
     result.push("# 预发布软件源，不建议启用\n".to_string());
 
-    result.push(format!("# deb {} {}-proposed main restricted universe multiverse\n", registry.url, codename));
-    result.push(format!("# # deb-src {} {}-proposed main restricted universe multiverse\n", registry.url, codename));
+    result.push(format!("# deb {} {}-proposed main restricted universe multiverse\n", mirror.url, codename));
+    result.push(format!("# # deb-src {} {}-proposed main restricted universe multiverse\n", mirror.url, codename));
 
     result
 }
@@ -119,16 +118,16 @@ fn action_setup_proxy(
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
 	if param.get_flag("list") {
-        list_registers(&REGISTRYS);
+        list_mirrors(&MIRRORS);
         return Ok(());
     }
-	registry::setup_proxy_action(param,"mirror",&REGISTRYS,|registry|{
+	mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror|{
 		let Some(code_name) = get_codename() else {
 			return Ok(());
 		};
 
 		println!("code_name: {}", code_name);
-		let lines = gen_ubuntu_apt_config(registry, code_name);
+		let lines = gen_ubuntu_apt_config(mirror, code_name);
 		write_lines_to_file(
 			&lines,
 			Path::new("/etc/apt/"),

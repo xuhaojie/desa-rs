@@ -5,7 +5,7 @@ pub mod execute;
 pub mod package;
 pub mod platform;
 pub mod file;
-pub mod registry;
+pub mod mirror;
 #[cfg(test)]
 mod tests {
     #[test]

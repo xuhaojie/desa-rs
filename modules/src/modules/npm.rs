@@ -1,8 +1,7 @@
 use crate::{BaseModule, BasicAction, Module};
-use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::execute::{execute_command, Cmd};
-use utility::registry::{self,Registry, list_registers, set_registry};
+use utility::mirror::{self,Mirror};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -31,13 +30,13 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-static REGISTRYS:[Registry;2] = [
-    Registry {
+static MIRRORS:[Mirror;2] = [
+    Mirror {
         name: "nmpjs",
         caption: "官方镜像",
         url: "https://registry.npmjs.org/",
     },
-    Registry {
+    Mirror {
         name: "taobao",
         caption: "淘宝镜像",
         url: "https://registry.npm.taobao.org",
@@ -48,10 +47,10 @@ fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-	registry::setup_proxy_action(param,"mirror",&REGISTRYS,|registry|{
+	mirror::setup_mirror_action(param, "mirror" , &MIRRORS,|mirror|{
 		let cmd = Cmd {
 			cmd: "npm",
-			params: vec!["config", "set", "registry", registry.url],
+			params: vec!["config", "set", "registry", mirror.url],
 		};
 		if let Ok(code) = execute_command(&cmd) {
 			if 0 == code {}

@@ -1,8 +1,7 @@
 use crate::{BaseModule, BasicAction, Module};
-use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::{clean::*, execute::*};
-use utility::registry::{self,Registry, list_registers, set_registry};
+use utility::mirror::{self,Mirror};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -77,13 +76,13 @@ fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), 
 
 
 
-static REGISTRYS:[Registry;2] = [
-    Registry {
+static MIRRORS:[Mirror;2] = [
+    Mirror {
         name: "goproxy.cn",
         caption: "goproxy.cn",
         url: "https://goproxy.cn,direct",
     },
-    Registry {
+    Mirror {
         name: "goproxy.io",
         caption: "goproxy.io",
         url: "https://proxy.golang.com.cn,direct",
@@ -94,7 +93,7 @@ fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-	registry::setup_proxy_action(param, "mirror", &REGISTRYS, |registry|{
+	mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror|{
 		let cmd1 = Cmd {
 			cmd: "go",
 			params: vec!["env", "-w", "GO111MODULE=on"],
@@ -105,7 +104,7 @@ fn action_setup_proxy(
 			}
 		}
 
-		let proxy = format!("GOPROXY={}", registry.url);
+		let proxy = format!("GOPROXY={}", mirror.url);
 		let cmd2 = Cmd {
 			cmd: "go",
 			params: vec!["env", "-w", &proxy],
