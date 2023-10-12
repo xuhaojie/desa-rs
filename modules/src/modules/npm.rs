@@ -2,6 +2,8 @@ use crate::{BaseModule, BasicAction, Module};
 use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::execute::{execute_command, Cmd};
+use utility::registry::{self,Registry, list_registers, set_registry};
+
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "npm",
@@ -13,8 +15,6 @@ pub fn new() -> Box<dyn Module> {
                     .about("clean cargo projects builds")
                     .arg(
                         Arg::new("mirror")
-                            .short('m')
-                            .long("mirror")
                             .help("mirror name, [taobao, origin]")
                             .takes_value(true),
                     )
@@ -24,42 +24,31 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
+static REGISTRYS:[Registry;2] = [
+    Registry {
+        name: "nmpjs",
+        caption: "官方镜像",
+        url: "https://registry.npmjs.org/",
+    },
+    Registry {
+        name: "taobao",
+        caption: "淘宝镜像",
+        url: "https://registry.npm.taobao.org",
+    },
+];
+
 fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-    let mirros = ["origin", "taobao"];
-    if let Some(mirror) = param.value_of("mirror") {
-        let mut target = -1;
-        let mut index = 0;
-        for m in mirros.iter() {
-            if *m == mirror {
-                target = index;
-                break;
-            }
-            index += 1;
-        }
-
-        if target < 0 {
-            return Err(anyhow!("invalid mirror"));
-        } else {
-            let url = match mirror {
-                "origin" => "https://registry.npmjs.org/",
-                "taobao" => "https://registry.npm.taobao.org",
-                _ => "https://registry.npmjs.org/",
-            };
-
-            let cmd = Cmd {
-                cmd: "npm",
-                params: vec!["config", "set", "registry", url],
-            };
-            if let Ok(code) = execute_command(&cmd) {
-                if 0 == code {}
-            }
-            println!("set proxy to {} succeeded", mirror);
-            Ok(())
-        }
-    } else {
-        Err(anyhow!("miss param for mirror"))
-    }
+	registry::setup_proxy_action(param,&REGISTRYS,|registry|{
+		let cmd = Cmd {
+			cmd: "npm",
+			params: vec!["config", "set", "registry", registry.url],
+		};
+		if let Ok(code) = execute_command(&cmd) {
+			if 0 == code {}
+		}
+		Ok(())
+	})
 }

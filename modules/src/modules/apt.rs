@@ -7,6 +7,7 @@ use std::{
     path::Path,
 };
 use utility::file::*;
+use utility::registry::{self,Registry, list_registers, set_registry};
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
         name: "apt",
@@ -18,8 +19,8 @@ pub fn new() -> Box<dyn Module> {
                     .about("setup apt mirror")
                     .arg(
                         Arg::new("mirror")
-                            .short('m')
-                            .long("mirror")
+                            //.short('m')
+                            //.long("mirror")
                             .help("mirror name, [cn.ubuntu, tuna]")
                             .takes_value(true),
                     )
@@ -36,13 +37,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-struct Registry {
-    name: &'static str,
-    caption: &'static str,
-    url: &'static str,
-}
-
-static REGISTRYS: [Registry; 2] = [
+static REGISTRYS:[Registry;2] = [
     Registry {
         name: "cn.ubuntu",
         caption: "官方中国镜像",
@@ -54,12 +49,6 @@ static REGISTRYS: [Registry; 2] = [
         url: "https://mirrors.tuna.tsinghua.edu.cn/ubuntu/",
     },
 ];
-
-fn list_registers() {
-    for r in &REGISTRYS {
-        print!("{} [{}] \n{}\n", r.caption, r.name, r.url);
-    }
-}
 
 fn get_codename() -> Option<&'static str> {
     let Ok(input) = File::open("/etc/issue") else {
@@ -129,46 +118,19 @@ fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-    if param.get_flag("list") {
-        list_registers();
-        return Ok(());
-    }
+	registry::setup_proxy_action(param,&REGISTRYS,|registry|{
+		let Some(code_name) = get_codename() else {
+			return Ok(());
+		};
 
-    if let Some(mirror) = param.value_of("mirror") {
-        let mut index: i32 = -1;
-        let mut i = 0;
-        for r in REGISTRYS.iter() {
-            if r.name == mirror {
-                index = i;
-                break;
-            }
-            i += 1;
-        }
-
-        if index >= 0 {
-            let Some(code_name) = get_codename() else {
-                return Ok(());
-            };
-
-            println!("code_name: {}", code_name);
-            let lines = gen_ubuntu_apt_config(&REGISTRYS[index as usize], code_name);
-            write_lines_to_file(
-                &lines,
-                Path::new("/etc/apt/"),
-                "sources.list",
-                "sources.list.bak",
-            )?;
-
-            println!("set proxy to {} succeeded", mirror);
-
-            Ok(())
-        } else {
-            Err(anyhow!("invalid mirror"))
-        }
-    } else {
-        list_registers();
-        Err(anyhow!(
-            "Please specify a registery by name, for example tuna"
-        ))
-    }
+		println!("code_name: {}", code_name);
+		let lines = gen_ubuntu_apt_config(registry, code_name);
+		write_lines_to_file(
+			&lines,
+			Path::new("/etc/apt/"),
+			"sources.list",
+			"sources.list.bak",
+		)?;
+		Ok(())
+	})
 }
