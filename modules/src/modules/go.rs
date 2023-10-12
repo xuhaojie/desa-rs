@@ -2,6 +2,7 @@ use crate::{BaseModule, BasicAction, Module};
 use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::{clean::*, execute::*};
+use utility::registry::{self,Registry, list_registers, set_registry};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -24,17 +25,24 @@ pub fn new() -> Box<dyn Module> {
                 execute: action_clean,
             },
             BasicAction {
-                name: "proxy",
+                name: "mirror",
                 cmd: || {
-                    Command::new("proxy")
+                    Command::new("mirror")
                         .about("clean cargo projects builds")
                         .arg(
                             Arg::new("mirror")
-                                .short('m')
-                                .long("mirror")
+                                //.short('m')
+                                //.long("mirror")
                                 .help("mirror name, [goproxy.cn, goproxy.io]")
                                 .takes_value(true),
                         )
+						.arg(
+							Arg::new("list")
+								.short('l')
+								.long("list")
+								.help("list available go proxys")
+								.action(clap::ArgAction::SetTrue),
+						)						
                 },
                 execute: action_setup_proxy,
             },
@@ -67,56 +75,46 @@ fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), 
     Ok(())
 }
 
+
+
+static REGISTRYS:[Registry;2] = [
+    Registry {
+        name: "goproxy.cn",
+        caption: "goproxy.cn",
+        url: "https://goproxy.cn,direct",
+    },
+    Registry {
+        name: "goproxy.io",
+        caption: "goproxy.io",
+        url: "https://proxy.golang.com.cn,direct",
+    },
+ ];
+
 fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-    //$ go env -w GO111MODULE=on
-    //$ go env -w GOPROXY=https://goproxy.cn,direct
-    let mirros = ["goproxy.cn", "goproxy.io"];
-    if let Some(mirror) = param.value_of("mirror") {
-        let mut target = -1;
-        let mut index = 0;
-        for m in mirros.iter() {
-            if *m == mirror {
-                target = index;
-                break;
-            }
-            index += 1;
-        }
+	registry::setup_proxy_action(param, "mirror", &REGISTRYS, |registry|{
+		let cmd1 = Cmd {
+			cmd: "go",
+			params: vec!["env", "-w", "GO111MODULE=on"],
+		};
+		if let Ok(code) = execute_command(&cmd1) {
+			if 0 == code {
+				println!("exec {} succeed", cmd1.to_string());
+			}
+		}
 
-        if target < 0 {
-            return Err(anyhow!("invalid mirror"));
-        } else {
-            let url = match mirror {
-                "goproxy.cn" => "https://goproxy.cn,direct",
-                "goproxy.io" => "https://proxy.golang.com.cn,direct",
-                _ => "https://goproxy.cn,direct",
-            };
-
-            let cmd1 = Cmd {
-                cmd: "go",
-                params: vec!["env", "-w", "GO111MODULE=on"],
-            };
-            if let Ok(code) = execute_command(&cmd1) {
-                if 0 == code {
-                    println!("exec {} succeed", cmd1.to_string());
-                }
-            }
-
-            let proxy = format!("GOPROXY={}", url);
-            let cmd2 = Cmd {
-                cmd: "go",
-                params: vec!["env", "-w", &proxy],
-            };
-            if let Ok(code) = execute_command(&cmd2) {
-                if 0 == code {
-                    println!("exec {} succeed", cmd2.to_string());
-                }
-            }
-            Ok(())
-        }
-    } else {
-        Err(anyhow!("miss param for mirror"))
-    }
+		let proxy = format!("GOPROXY={}", registry.url);
+		let cmd2 = Cmd {
+			cmd: "go",
+			params: vec!["env", "-w", &proxy],
+		};
+		if let Ok(code) = execute_command(&cmd2) {
+			if 0 == code {
+				println!("exec {} succeed", cmd2.to_string());
+			}
+		}
+		Ok(())
+	})
 }

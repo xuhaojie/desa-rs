@@ -28,7 +28,7 @@ pub fn new() -> Box<dyn Module> {
                         Arg::new("list")
                             .short('l')
                             .long("list")
-                            .help("list available cargo registers")
+                            .help("list available apt mirrors")
                             .action(clap::ArgAction::SetTrue),
                     )
             },
@@ -118,7 +118,11 @@ fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-	registry::setup_proxy_action(param,&REGISTRYS,|registry|{
+	if param.get_flag("list") {
+        list_registers(&REGISTRYS);
+        return Ok(());
+    }
+	registry::setup_proxy_action(param,"mirror",&REGISTRYS,|registry|{
 		let Some(code_name) = get_codename() else {
 			return Ok(());
 		};

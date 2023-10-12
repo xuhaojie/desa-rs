@@ -38,10 +38,11 @@ pub fn set_registry(registrys:&[Registry], target:&str, action: fn(&Registry)-> 
 
 pub fn setup_proxy_action(
     param: &ArgMatches,
+	param_name:&str,
 	registrys:&[Registry],
 	action: fn(&Registry)->  Result<(), anyhow::Error>
 ) -> Result<(), anyhow::Error> {
-    if let Some(mirror) = param.value_of("mirror") {
+    if let Some(mirror) = param.value_of(param_name) {
 		set_registry(registrys,mirror,action)
     } else {
 		println!("available mirror is:");

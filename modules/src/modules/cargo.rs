@@ -3,6 +3,7 @@ use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use dirs;
 use utility::{clean::*, file::write_lines_to_file};
+use utility::registry::{self,Registry, list_registers, set_registry};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -25,14 +26,14 @@ pub fn new() -> Box<dyn Module> {
                 execute: action_clean,
             },
             BasicAction {
-                name: "proxy",
+                name: "mirror",
                 cmd: || {
-                    Command::new("proxy")
-                        .about("clean cargo projects builds")
+                    Command::new("mirror")
+                        .about("set cargo mirror")
                         .arg(
                             Arg::new("mirror")
-                                .short('m')
-                                .long("mirror")
+                                //.short('m')
+                                //.long("mirror")
                                 .help("mirror name, [tuna, sjtu, ustc, rustcc]")
                                 .takes_value(true),
                         )
@@ -63,12 +64,6 @@ fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), 
     return clean_projects(&projects, "cargo", &["clean"]);
 }
 
-struct Registry {
-    name: &'static str,
-    caption: &'static str,
-    url: &'static str,
-}
-
 static REGISTRYS: [Registry; 5] = [
     Registry {
         name: "crates-io",
@@ -97,17 +92,11 @@ static REGISTRYS: [Registry; 5] = [
     },
 ];
 
-fn list_registers() {
-    for r in &REGISTRYS {
-        print!("{} [{}] \n{}\n", r.caption, r.name, r.url);
-    }
-}
-
-fn gen_config(index: usize) -> Vec<String> {
+fn gen_config(registry: &Registry) -> Vec<String> {
     let mut result = Vec::<String>::new();
     let mut i = 0;
 
-    if index == 0 {
+    if registry.name == REGISTRYS[0].name {
         let r = &REGISTRYS[0];
         result.push(format!(
             "# {}\n[source.{}]\nregistry = \"{}\"\n",
@@ -120,7 +109,7 @@ fn gen_config(index: usize) -> Vec<String> {
                 r.caption, r.name, r.url
             ));
             if i == 0 {
-                result.push(format!("replace-with = \"{}\"\n", REGISTRYS[index].name));
+                result.push(format!("replace-with = \"{}\"\n", registry.name));
             }
             i += 1;
         }
@@ -132,44 +121,26 @@ fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-    if param.get_flag("list") {
-        list_registers();
+
+	if param.get_flag("list") {
+        list_registers(&REGISTRYS);
         return Ok(());
     }
+	registry::setup_proxy_action(param, "mirror", &REGISTRYS,|registry|{
+		let lines = gen_config(registry);
+		for l in &lines {
+			print!("{}", l);
+		}
 
-    if let Some(mirror) = param.value_of("mirror") {
-        let mut index: i32 = -1;
-        let mut i = 0;
-        for r in REGISTRYS.iter() {
-            if r.name == mirror {
-                index = i;
-                break;
-            }
-            i += 1;
-        }
+		let home_dir = match dirs::home_dir() {
+			Some(path) => path,
+			None => return Err(anyhow!("can't get home dir")),
+		};
 
-        if index >= 0 {
-            let lines = gen_config(index as usize);
-            for l in &lines {
-                print!("{}", l);
-            }
+		let target_path = home_dir.join(".cargo");
+		write_lines_to_file(&lines, &target_path, "config", "config.bak")?;
+		println!("set proxy to {} succeeded", registry.name);
+		Ok(())
+	})
 
-            let home_dir = match dirs::home_dir() {
-                Some(path) => path,
-                None => return Err(anyhow!("can't get home dir")),
-            };
-
-            let target_path = home_dir.join(".cargo");
-            write_lines_to_file(&lines, &target_path, "config", "config.bak")?;
-            println!("set proxy to {} succeeded", mirror);
-            Ok(())
-        } else {
-            Err(anyhow!("invalid mirror"))
-        }
-    } else {
-        list_registers();
-        Err(anyhow!(
-            "Please specify a registery by name, for example tuna"
-        ))
-    }
 }
