@@ -15,7 +15,7 @@ pub fn new() -> Box<dyn Module> {
                     .about("setup npm mirror")
                     .arg(
                         Arg::new("mirror")
-                            .help("mirror name, [taobao, origin]")
+                            .help("mirror name, for example npmmirror")
                             .takes_value(true),
                     )
                     .arg(
@@ -38,9 +38,9 @@ static MIRRORS: [Mirror; 2] = [
         url: "https://registry.npmjs.org/",
     },
     Mirror {
-        name: "taobao",
+        name: "npmmirror",
         caption: "淘宝镜像",
-        url: "https://registry.npm.taobao.org",
+        url: "https://registry.npmmirror.com",
     },
 ];
 
