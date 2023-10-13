@@ -2,8 +2,8 @@ use crate::{BaseModule, BasicAction, Module};
 use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use dirs;
+use utility::mirror::{self, list_mirrors, Mirror};
 use utility::{clean::*, file::write_lines_to_file};
-use utility::mirror::{self,Mirror, list_mirrors};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -99,13 +99,13 @@ fn gen_config(mirror: &Mirror) -> Vec<String> {
     if mirror.name == MIRRORS[0].name {
         let r = &MIRRORS[0];
         result.push(format!(
-            "# {}\n[source.{}]\nMirror = \"{}\"\n",
+            "# {}\n[source.{}]\nregistry = \"{}\"\n",
             r.caption, r.name, r.url
         ));
     } else {
         for r in &MIRRORS {
             result.push(format!(
-                "# {}\n[source.{}]\nMirror = \"{}\"\n",
+                "# {}\n[source.{}]\nregistry = \"{}\"\n",
                 r.caption, r.name, r.url
             ));
             if i == 0 {
@@ -121,26 +121,24 @@ fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-
-	if param.get_flag("list") {
+    if param.get_flag("list") {
         list_mirrors(&MIRRORS);
         return Ok(());
     }
-	mirror::setup_mirror_action(param, "mirror", &MIRRORS,|mirror|{
-		let lines = gen_config(mirror);
-		for l in &lines {
-			print!("{}", l);
-		}
+    mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror| {
+        let lines = gen_config(mirror);
+        for l in &lines {
+            print!("{}", l);
+        }
 
-		let home_dir = match dirs::home_dir() {
-			Some(path) => path,
-			None => return Err(anyhow!("can't get home dir")),
-		};
+        let home_dir = match dirs::home_dir() {
+            Some(path) => path,
+            None => return Err(anyhow!("can't get home dir")),
+        };
 
-		let target_path = home_dir.join(".cargo");
-		write_lines_to_file(&lines, &target_path, "config", "config.bak")?;
-		println!("set proxy to {} succeeded", mirror.name);
-		Ok(())
-	})
-
+        let target_path = home_dir.join(".cargo");
+        write_lines_to_file(&lines, &target_path, "config", "config.bak")?;
+        println!("set proxy to {} succeeded", mirror.name);
+        Ok(())
+    })
 }
