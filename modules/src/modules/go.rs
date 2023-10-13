@@ -1,7 +1,8 @@
 use crate::{BaseModule, BasicAction, Module};
+use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
+use utility::mirror::{self, Mirror};
 use utility::{clean::*, execute::*};
-use utility::mirror::{self,Mirror};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -30,18 +31,16 @@ pub fn new() -> Box<dyn Module> {
                         .about("clean cargo projects builds")
                         .arg(
                             Arg::new("mirror")
-                                //.short('m')
-                                //.long("mirror")
                                 .help("mirror name, [goproxy.cn, goproxy.io]")
                                 .takes_value(true),
                         )
-						.arg(
-							Arg::new("list")
-								.short('l')
-								.long("list")
-								.help("list available go proxys")
-								.action(clap::ArgAction::SetTrue),
-						)						
+                        .arg(
+                            Arg::new("list")
+                                .short('l')
+                                .long("list")
+                                .help("list available go proxys")
+                                .action(clap::ArgAction::SetTrue),
+                        )
                 },
                 execute: action_setup_proxy,
             },
@@ -74,9 +73,7 @@ fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), 
     Ok(())
 }
 
-
-
-static MIRRORS:[Mirror;2] = [
+static MIRRORS: [Mirror; 2] = [
     Mirror {
         name: "goproxy.cn",
         caption: "goproxy.cn",
@@ -87,33 +84,43 @@ static MIRRORS:[Mirror;2] = [
         caption: "goproxy.io",
         url: "https://proxy.golang.com.cn,direct",
     },
- ];
+];
 
 fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-	mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror|{
-		let cmd1 = Cmd {
-			cmd: "go",
-			params: vec!["env", "-w", "GO111MODULE=on"],
-		};
-		if let Ok(code) = execute_command(&cmd1) {
-			if 0 == code {
-				println!("exec {} succeed", cmd1.to_string());
-			}
-		}
+    mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror| {
+        let cmd1 = Cmd {
+            cmd: "go",
+            params: vec!["env", "-w", "GO111MODULE=on"],
+        };
+        if let Ok(code) = execute_command(&cmd1) {
+            if 0 == code {
+                println!("exec {} succeed", cmd1.to_string());
+            }
+        } else {
+            return Err(anyhow!(
+                "exec \"{}\" failed! Please install go first!",
+                cmd1.to_string(),
+            ));
+        }
 
-		let proxy = format!("GOPROXY={}", mirror.url);
-		let cmd2 = Cmd {
-			cmd: "go",
-			params: vec!["env", "-w", &proxy],
-		};
-		if let Ok(code) = execute_command(&cmd2) {
-			if 0 == code {
-				println!("exec {} succeed", cmd2.to_string());
-			}
-		}
-		Ok(())
-	})
+        let proxy = format!("GOPROXY={}", mirror.url);
+        let cmd2 = Cmd {
+            cmd: "go",
+            params: vec!["env", "-w", &proxy],
+        };
+        if let Ok(code) = execute_command(&cmd2) {
+            if 0 == code {
+                println!("exec {} succeed", cmd2.to_string());
+            }
+        } else {
+            return Err(anyhow!(
+                "exec \"{}\" failed! Please install go first!",
+                cmd1.to_string(),
+            ));
+        }
+        Ok(())
+    })
 }
