@@ -1,4 +1,5 @@
 use crate::{BaseModule, BasicAction, Module};
+use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::execute::{execute_command, Cmd};
 use utility::mirror::{self, Mirror};
@@ -25,14 +26,14 @@ pub fn new() -> Box<dyn Module> {
                             .long("list")
                             .help("list available pip mirrors")
                             .action(clap::ArgAction::SetTrue),
-                    )					
+                    )
             },
             execute: action_setup_proxy,
         }],
     })
 }
 
-static MIRRORS:[Mirror;4] = [
+static MIRRORS: [Mirror; 4] = [
     Mirror {
         name: "pypi.org",
         caption: "官方镜像",
@@ -52,21 +53,26 @@ static MIRRORS:[Mirror;4] = [
         name: "aliyun",
         caption: "淘宝镜像",
         url: "http://mirrors.aliyun.com/pypi/simple",
-    },		
+    },
 ];
 
 fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-	mirror::setup_mirror_action(param,"mirror", &MIRRORS,|mirror|{
-		let cmd = Cmd {
-			cmd: "pip",
-			params: vec!["config", "set", "global.index-url", mirror.url],
-		};
-		if let Ok(code) = execute_command(&cmd) {
-			if 0 == code {}
-		}
-		Ok(())
-	})
+    mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror| {
+        let cmd = Cmd {
+            cmd: "pip",
+            params: vec!["config", "set", "global.index-url", mirror.url],
+        };
+        if let Ok(code) = execute_command(&cmd) {
+            if 0 == code {}
+        } else {
+            return Err(anyhow!(
+                "exec \"{}\" failed! Please install pip first!",
+                cmd.to_string(),
+            ));
+        }
+        Ok(())
+    })
 }

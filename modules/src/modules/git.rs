@@ -1,4 +1,5 @@
 use crate::{BaseModule, BasicAction, Module};
+use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::execute::{self, Cmd};
 
@@ -43,6 +44,11 @@ fn action_setup(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), 
             if 0 == code {
                 println!("exec {} succeed", cmd.to_string());
             }
+        } else {
+            return Err(anyhow!(
+                "exec \"{}\" failed! Please install git first!",
+                cmd.to_string(),
+            ));
         }
     }
 
@@ -57,6 +63,11 @@ fn action_setup(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), 
             if 0 == code {
                 println!("exec {} succeed", cmd.to_string());
             }
+        } else {
+            return Err(anyhow!(
+                "exec \"{}\" failed! Please install git first!",
+                cmd.to_string(),
+            ));
         }
     }
     Ok(())

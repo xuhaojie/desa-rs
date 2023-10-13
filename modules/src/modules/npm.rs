@@ -1,7 +1,8 @@
 use crate::{BaseModule, BasicAction, Module};
+use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::execute::{execute_command, Cmd};
-use utility::mirror::{self,Mirror};
+use utility::mirror::{self, Mirror};
 
 pub fn new() -> Box<dyn Module> {
     Box::new(BaseModule {
@@ -23,14 +24,14 @@ pub fn new() -> Box<dyn Module> {
                             .long("list")
                             .help("list available npm mirrors")
                             .action(clap::ArgAction::SetTrue),
-                    )					
+                    )
             },
             execute: action_setup_proxy,
         }],
     })
 }
 
-static MIRRORS:[Mirror;2] = [
+static MIRRORS: [Mirror; 2] = [
     Mirror {
         name: "nmpjs",
         caption: "官方镜像",
@@ -47,14 +48,19 @@ fn action_setup_proxy(
     _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
-	mirror::setup_mirror_action(param, "mirror" , &MIRRORS,|mirror|{
-		let cmd = Cmd {
-			cmd: "npm",
-			params: vec!["config", "set", "registry", mirror.url],
-		};
-		if let Ok(code) = execute_command(&cmd) {
-			if 0 == code {}
-		}
-		Ok(())
-	})
+    mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror| {
+        let cmd = Cmd {
+            cmd: "npm",
+            params: vec!["config", "set", "registry", mirror.url],
+        };
+        if let Ok(code) = execute_command(&cmd) {
+            if 0 == code {}
+        } else {
+            return Err(anyhow!(
+                "exec \"{}\" failed! Please install npm first!",
+                cmd.to_string(),
+            ));
+        }
+        Ok(())
+    })
 }
