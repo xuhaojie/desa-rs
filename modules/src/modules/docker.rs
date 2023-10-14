@@ -1,4 +1,4 @@
-use crate::{BaseModule, BasicAction, Module};
+use super::{BaseModule, BasicAction, Module};
 use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use std::path::Path;
@@ -18,8 +18,6 @@ pub fn new() -> Box<dyn Module> {
 			.about("setup docker mirror")
 			.arg(
 				Arg::new("mirror")
-					//.short('m')
-					//.long("mirror")
 					.help("mirror name, use -l to list")
 					.takes_value(true),
 			)
@@ -75,7 +73,6 @@ static MIRRORS:[Mirror;5] = [
 ];
 
 fn action_setup_mirror(
-    _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
 	if param.get_flag("list") {
@@ -113,7 +110,6 @@ fn action_setup_mirror(
 
 
 fn action_setup_user(
-    _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
     if let Some(user) = param.value_of("user") {
@@ -126,7 +122,6 @@ fn action_setup_user(
 			if 0 == code {
 				println!("exec {} succeed", cmd_add_user_to_group.to_string());
 
-				 
 				let cmd_refresh_group = Cmd {
 					cmd: "newgrp",
 					params: vec!["docker"],

@@ -1,4 +1,4 @@
-use crate::{BaseModule, BasicAction, Module};
+use super::{BaseModule, BasicAction, Module};
 use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use dirs;
@@ -32,8 +32,6 @@ pub fn new() -> Box<dyn Module> {
                         .about("set cargo mirror")
                         .arg(
                             Arg::new("mirror")
-                                //.short('m')
-                                //.long("mirror")
                                 .help("mirror name, [tuna, sjtu, ustc, rustcc]")
                                 .takes_value(true),
                         )
@@ -51,10 +49,9 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
+fn action_clean(param: &ArgMatches) -> Result<(), anyhow::Error> {
     let path = match param.value_of("path") {
         Some(p) => p.to_owned(),
-        //None => return Err(io::Error::new(io::ErrorKind::Other,"please specify a path")),
         None => String::from(std::env::current_dir()?.as_path().to_str().unwrap()),
     };
 
@@ -118,7 +115,6 @@ fn gen_config(mirror: &Mirror) -> Vec<String> {
 }
 
 fn action_setup_proxy(
-    _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
     if param.get_flag("list") {

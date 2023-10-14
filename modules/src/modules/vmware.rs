@@ -1,4 +1,4 @@
-use crate::{BaseModule, BasicAction, Module};
+use super::{BaseModule, BasicAction, Module};
 use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::{download::*, platform::*};
@@ -22,7 +22,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_download(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
+fn action_download(param: &ArgMatches) -> Result<(), anyhow::Error> {
     let os = match param.value_of("os") {
         Some(os) => Platform::from(os),
         None => current_platform(),

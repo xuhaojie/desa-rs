@@ -1,61 +1,6 @@
 pub mod modules;
 use crate::modules::*;
-use anyhow::anyhow;
-use clap::{ArgMatches, Command};
-
-pub trait Module {
-    fn name(&self) -> &'static str;
-    fn command(&self) -> Command<'static>;
-    fn execute(
-        &self,
-        parent: Option<Box<dyn Module>>,
-        param: &ArgMatches,
-    ) -> Result<(), anyhow::Error>;
-}
-
-pub struct BasicAction {
-    name: &'static str,
-    cmd: fn() -> Command<'static>,
-    execute: fn(parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error>,
-}
-
-struct BaseModule {
-    name: &'static str,
-    description: &'static str,
-    actions: Vec<BasicAction>,
-}
-
-impl Module for BaseModule {
-    fn name(&self) -> &'static str {
-        &self.name
-    }
-    fn command(&self) -> Command<'static> {
-        let mut cmd = Command::new(self.name()).about(self.description);
-        for action in &self.actions {
-            cmd = cmd.subcommand((action.cmd)());
-        }
-        cmd
-    }
-
-    fn execute(
-        &self,
-        _parent: Option<Box<dyn Module>>,
-        param: &ArgMatches,
-    ) -> Result<(), anyhow::Error> {
-        if let Some(action) = param.subcommand() {
-            for act in &self.actions {
-                if act.name == action.0 {
-                    if let Some(param) = param.subcommand_matches(act.name) {
-                        return (act.execute)(Some(self as &dyn Module), param);
-                    }
-                }
-            }
-        };
-
-        let _ = self.command().print_help();
-        return Err(anyhow!("Please specify sub command for '{}.'", self.name()));
-    }
-}
+use clap::Command;
 
 //#[tokio::main]
 fn main() {

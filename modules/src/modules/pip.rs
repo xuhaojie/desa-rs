@@ -1,4 +1,4 @@
-use crate::{BaseModule, BasicAction, Module};
+use super::{BaseModule, BasicAction, Module};
 use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::execute::{execute_command, Cmd};
@@ -57,7 +57,6 @@ static MIRRORS: [Mirror; 4] = [
 ];
 
 fn action_setup_proxy(
-    _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
     mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror| {

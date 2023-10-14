@@ -1,4 +1,4 @@
-use crate::{BaseModule, BasicAction, Module};
+use super::{BaseModule, BasicAction, Module}; // or use crate::modules::{BaseModule, BasicAction, Module};
 use clap::{Arg, ArgMatches, Command};
 use std::{
     fs::File,
@@ -19,8 +19,6 @@ pub fn new() -> Box<dyn Module> {
                     .about("setup apt mirror")
                     .arg(
                         Arg::new("mirror")
-                            //.short('m')
-                            //.long("mirror")
                             .help("mirror name, [cn.ubuntu, tuna]")
                             .takes_value(true),
                     )
@@ -67,8 +65,6 @@ fn get_codename() -> Option<&'static str> {
     }
     let version = &tokens[1][0..5];
 
-    //println!("version: {}", version);
-    //let version = "22.04";
     match version {
         "22.04" => Some("jammy"),
         "23.04" => Some("lunar"),
@@ -115,7 +111,6 @@ fn gen_ubuntu_apt_config(mirror: &Mirror, codename: &str) -> Vec<String> {
 }
 
 fn action_setup_proxy(
-    _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
     if param.get_flag("list") {

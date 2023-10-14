@@ -1,4 +1,4 @@
-use crate::{BaseModule, BasicAction, Module};
+use super::{BaseModule, BasicAction, Module};
 use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::mirror::{self, Mirror};
@@ -48,12 +48,13 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_clean(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
+fn action_clean(param: &ArgMatches) -> Result<(), anyhow::Error> {
     let path = match param.value_of("path") {
         Some(p) => p.to_owned(),
         None => String::from(std::env::current_dir()?.as_path().to_str().unwrap()),
         //None => return Err(io::Error::new(io::ErrorKind::Other,"please specify a path")),
     };
+	
 
     let mut projects = Vec::<String>::new();
     search_projects(&path, "go.mod", &mut projects)?;
@@ -87,7 +88,6 @@ static MIRRORS: [Mirror; 2] = [
 ];
 
 fn action_setup_proxy(
-    _parent: Option<&dyn Module>,
     param: &ArgMatches,
 ) -> Result<(), anyhow::Error> {
     mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror| {

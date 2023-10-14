@@ -1,4 +1,4 @@
-use crate::{BaseModule, BasicAction, Module};
+use super::{BaseModule, BasicAction, Module};
 use anyhow::anyhow;
 use clap::{Arg, ArgMatches, Command};
 use utility::execute::{self, Cmd};
@@ -32,7 +32,7 @@ pub fn new() -> Box<dyn Module> {
     })
 }
 
-fn action_setup(_parent: Option<&dyn Module>, param: &ArgMatches) -> Result<(), anyhow::Error> {
+fn action_setup(param: &ArgMatches) -> Result<(), anyhow::Error> {
     if let Some(user) = param.value_of("user") {
         let mut cmd = Cmd {
             cmd: "git",
