@@ -83,9 +83,7 @@ fn action_setup_mirror(
 	mirror::setup_mirror_action(param, "mirror", &MIRRORS, |mirror|{
 		let mut lines = Vec::<String>::new();
 		lines.push("{\n".to_string());
-		lines.push("\t\"mirror-mirrors\": [ \n".to_string());
-		lines.push(format!("\t\t\"{}\"\n" , mirror.url));
-		lines.push("\t]\n".to_string());
+		lines.push(format!("  \"registry-mirrors\": [\"{}\"]\n" , mirror.url));
 		lines.push("}\n".to_string());
 
 		write_lines_to_file(
